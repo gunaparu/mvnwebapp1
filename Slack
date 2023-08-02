@@ -1,1 +1,38 @@
+import csv
+import os
+from prettytable import from_csv
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
+def convert_csv_to_pretty_table(file_path):
+    with open(file_path, "r", newline='') as file:
+        csv_content = file.read()
+        table = from_csv(csv_content)
+    return table.get_string()
+
+def send_table_to_slack(table_text, slack_bot_token, channel):
+    slack_client = WebClient(token=slack_bot_token)
+
+    try:
+        response = slack_client.chat_postMessage(
+            channel=channel,
+            text=table_text
+        )
+        print("Message sent to Slack successfully!")
+    except SlackApiError as e:
+        print(f"Error sending message to Slack: {e.response['error']}")
+
+if __name__ == "__main__":
+    # Replace 'your_slack_bot_token' with your actual Slack bot token
+    slack_bot_token = 'your_slack_bot_token'
+    # Replace 'your_slack_channel' with the Slack channel where you want to send the message
+    slack_channel = 'your_slack_channel'
+
+    # Replace 'input.csv' with the path to your CSV file
+    csv_file_path = 'input.csv'
+
+    if os.path.exists(csv_file_path):
+        table_text = convert_csv_to_pretty_table(csv_file_path)
+        send_table_to_slack(table_text, slack_bot_token, slack_channel)
+    else:
+        print("CSV file not found.")
