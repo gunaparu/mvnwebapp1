@@ -1,0 +1,21 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyDefaultSecurityGroupRules",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RevokeSecurityGroupIngress"
+            ],
+            "Resource": "arn:aws:ec2:::security-group/sg-xxxxxxxx",
+            "Condition": {
+                "StringEquals": {
+                    "aws:RequestTag/aws:cloudformation:stack-name": "default"
+                }
+            }
+        }
+    ]
+}
