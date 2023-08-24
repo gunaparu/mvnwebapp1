@@ -4,16 +4,9 @@
     {
       "Effect": "Allow",
       "Action": [
-        "jenkins:CreateJob",
-        "jenkins:UpdateJob",
-        "jenkins:Build",
-        "jenkins:CancelBuild"
+        "cloudability:ListResources",
+        "cloudability:GetCosts"
       ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "jenkins:Read",
       "Resource": "*"
     }
   ]
