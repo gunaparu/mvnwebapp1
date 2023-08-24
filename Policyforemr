@@ -4,15 +4,29 @@
     {
       "Effect": "Allow",
       "Action": [
+        "eks:Describe*",
+        "eks:List*",
+        "eks:Get*",
+        "ecs:Describe*",
+        "ecs:List*",
+        "dynamodb:Scan",
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "ec2:DescribeInstances",
+        "ec2:DescribeImages",
+        "ec2:StartInstances",
+        "ec2:StopInstances",
+        "elasticmapreduce:Describe*",
+        "elasticmapreduce:List*",
+        "ssm:Describe*",
+        "ssm:GetParameter",
+        "kms:DescribeKey",
+        "kafka:Describe*",
+        "rds:Describe*",
+        "rds:ListTagsForResource",
         "s3:GetObject",
         "s3:PutObject",
-        "s3:ListBucket",
-        "dynamodb:Scan",
-        "dynamodb:Query",
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "ec2:DescribeInstances"
+        "s3:ListBucket"
       ],
       "Resource": "*"
     }
