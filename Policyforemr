@@ -1,0 +1,27 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "elasticmapreduce:RunJobFlow",
+        "elasticmapreduce:DescribeJobFlows",
+        "elasticmapreduce:TerminateJobFlows"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::your-input-bucket/*",
+        "arn:aws:s3:::your-output-bucket/*"
+      ]
+    }
+  ]
+}
