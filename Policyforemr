@@ -4,24 +4,17 @@
     {
       "Effect": "Allow",
       "Action": [
-        "elasticmapreduce:RunJobFlow",
-        "elasticmapreduce:DescribeJobFlows",
-        "elasticmapreduce:TerminateJobFlows"
+        "jenkins:CreateJob",
+        "jenkins:UpdateJob",
+        "jenkins:Build",
+        "jenkins:CancelBuild"
       ],
       "Resource": "*"
     },
     {
       "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:ListBucket",
-        "s3:DeleteObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::your-input-bucket/*",
-        "arn:aws:s3:::your-output-bucket/*"
-      ]
+      "Action": "jenkins:Read",
+      "Resource": "*"
     }
   ]
 }
