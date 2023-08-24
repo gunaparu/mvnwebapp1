@@ -4,8 +4,15 @@
     {
       "Effect": "Allow",
       "Action": [
-        "cloudability:ListResources",
-        "cloudability:GetCosts"
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:ListBucket",
+        "dynamodb:Scan",
+        "dynamodb:Query",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "ec2:DescribeInstances"
       ],
       "Resource": "*"
     }
