@@ -1,34 +1,21 @@
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "eks:Describe*",
-        "eks:List*",
-        "eks:Get*",
-        "ecs:Describe*",
-        "ecs:List*",
-        "dynamodb:Scan",
-        "dynamodb:GetItem",
-        "dynamodb:Query",
-        "ec2:DescribeInstances",
-        "ec2:DescribeImages",
-        "ec2:StartInstances",
-        "ec2:StopInstances",
-        "elasticmapreduce:Describe*",
-        "elasticmapreduce:List*",
-        "ssm:Describe*",
-        "ssm:GetParameter",
-        "kms:DescribeKey",
-        "kafka:Describe*",
-        "rds:Describe*",
-        "rds:ListTagsForResource",
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:ListBucket"
-      ],
-      "Resource": "*"
-    }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListUsers",
+                "iam:DescribeUsers",
+                "iam:ListGroups",
+                "iam:DescribeGroups",
+                "iam:ListRoles",
+                "iam:DescribeRoles",
+                "iam:ListPolicies",
+                "iam:DescribePolicies",
+                "iam:ListPolicyVersions",
+                "iam:GetPolicyVersion"
+            ],
+            "Resource": "*"
+        }
+    ]
 }
