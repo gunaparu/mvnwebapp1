@@ -1,21 +1,35 @@
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "iam:ListUsers",
-                "iam:DescribeUsers",
-                "iam:ListGroups",
-                "iam:DescribeGroups",
-                "iam:ListRoles",
-                "iam:DescribeRoles",
-                "iam:ListPolicies",
-                "iam:DescribePolicies",
-                "iam:ListPolicyVersions",
-                "iam:GetPolicyVersion"
-            ],
-            "Resource": "*"
-        }
+import boto3
+
+# Set your AWS credentials (best practice: use IAM roles)
+aws_access_key = 'your_access_key'
+aws_secret_key = 'your_secret_key'
+region = 'your_region'
+
+# Specify the S3 bucket name
+bucket_name = 'your_bucket_name'
+
+# Initialize the S3 and CloudTrail clients
+s3_client = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, region_name=region)
+cloudtrail_client = boto3.client('cloudtrail', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, region_name=region)
+
+# Retrieve CloudTrail logs related to the S3 bucket and VDI instances
+response = cloudtrail_client.lookup_events(
+    LookupAttributes=[
+        {'AttributeKey': 'ResourceName', 'AttributeValue': f"arn:aws:s3:::{bucket_name}/*"},
+        {'AttributeKey': 'EventName', 'AttributeValue': 'AssumeRole'}
     ]
-}
+)
+
+# Extract relevant information from CloudTrail events
+accessed_via_vdi = False
+for event in response['Events']:
+    role_arn = event['Resources'][0]['ResourceName']
+    role_name = role_arn.split('/')[-1]
+    if "vdi" in role_name.lower():
+        accessed_via_vdi = True
+        break
+
+if accessed_via_vdi:
+    print("The S3 bucket is being accessed via VDI instances.")
+else:
+    print("The S3 bucket is not being accessed via VDI instances.")
