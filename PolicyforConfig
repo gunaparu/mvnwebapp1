@@ -1,0 +1,22 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "config:StartRemediationExecution",
+        "config:GetComplianceDetailsByConfigRule",
+        "config:PutRemediationConfigurations"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:ModifyInstanceAttribute", // Modify this based on the specific remediation action
+        // Add other permissions for necessary remediation actions
+      ],
+      "Resource": "*"
+    }
+  ]
+}
