@@ -1,35 +1,31 @@
 import boto3
 
-# Set your AWS credentials (best practice: use IAM roles)
-aws_access_key = 'your_access_key'
-aws_secret_key = 'your_secret_key'
-region = 'your_region'
+# Initialize Boto3 clients for S3 and CloudTrail
+s3_client = boto3.client('s3')
+cloudtrail_client = boto3.client('cloudtrail')
 
-# Specify the S3 bucket name
-bucket_name = 'your_bucket_name'
+# Define the S3 bucket name you want to monitor
+bucket_name = 'your-bucket-name'
 
-# Initialize the S3 and CloudTrail clients
-s3_client = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, region_name=region)
-cloudtrail_client = boto3.client('cloudtrail', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, region_name=region)
+# Step 1: List objects in the S3 bucket
+def list_objects():
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    for obj in response.get('Contents', []):
+        print(f"Object: {obj['Key']}")
 
-# Retrieve CloudTrail logs related to the S3 bucket and VDI instances
-response = cloudtrail_client.lookup_events(
-    LookupAttributes=[
-        {'AttributeKey': 'ResourceName', 'AttributeValue': f"arn:aws:s3:::{bucket_name}/*"},
-        {'AttributeKey': 'EventName', 'AttributeValue': 'AssumeRole'}
-    ]
-)
+# Step 2: Retrieve CloudTrail logs for S3 bucket
+def get_cloudtrail_logs():
+    events = cloudtrail_client.lookup_events(LookupAttributes=[{'AttributeKey': 'ResourceName', 'AttributeValue': f'arn:aws:s3:::{bucket_name}'}])
+    for event in events.get('Events', []):
+        print(f"Event Name: {event['EventName']}")
+        print(f"User: {event['Username']}")
+        print(f"Event Time: {event['EventTime']}")
+        print(f"Event Source: {event['EventSource']}")
+        print("\n")
 
-# Extract relevant information from CloudTrail events
-accessed_via_vdi = False
-for event in response['Events']:
-    role_arn = event['Resources'][0]['ResourceName']
-    role_name = role_arn.split('/')[-1]
-    if "vdi" in role_name.lower():
-        accessed_via_vdi = True
-        break
+# Step 3: Access S3 bucket access logs (if enabled)
+# You would typically parse and analyze these logs to gather more detailed information.
 
-if accessed_via_vdi:
-    print("The S3 bucket is being accessed via VDI instances.")
-else:
-    print("The S3 bucket is not being accessed via VDI instances.")
+# Run the functions
+list_objects()
+get_cloudtrail_logs()
