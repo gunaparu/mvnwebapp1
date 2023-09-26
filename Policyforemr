@@ -1,31 +1,53 @@
+from multiprocessing.sharedctypes import Value
 import boto3
-
-# Initialize Boto3 clients for S3 and CloudTrail
-s3_client = boto3.client('s3')
-cloudtrail_client = boto3.client('cloudtrail')
-
-# Define the S3 bucket name you want to monitor
-bucket_name = 'your-bucket-name'
-
-# Step 1: List objects in the S3 bucket
-def list_objects():
-    response = s3_client.list_objects_v2(Bucket=bucket_name)
-    for obj in response.get('Contents', []):
-        print(f"Object: {obj['Key']}")
-
-# Step 2: Retrieve CloudTrail logs for S3 bucket
-def get_cloudtrail_logs():
-    events = cloudtrail_client.lookup_events(LookupAttributes=[{'AttributeKey': 'ResourceName', 'AttributeValue': f'arn:aws:s3:::{bucket_name}'}])
-    for event in events.get('Events', []):
-        print(f"Event Name: {event['EventName']}")
-        print(f"User: {event['Username']}")
-        print(f"Event Time: {event['EventTime']}")
-        print(f"Event Source: {event['EventSource']}")
-        print("\n")
-
-# Step 3: Access S3 bucket access logs (if enabled)
-# You would typically parse and analyze these logs to gather more detailed information.
-
-# Run the functions
-list_objects()
-get_cloudtrail_logs()
+from datetime import date
+import xlwings as xw
+import openpyxl
+import botocore
+import pandas as pd
+from botocore.exceptions import ClientError
+def main():
+    sts_client = boto3.client('sts')
+    assumed_role_object = sts_client.assume_role(RoleArn='arn:aws:iam::528150397796:role/IAM_Automation',RoleSessionName="iamautomation",ExternalId="UZZCWIWGSY")
+    credentials=assumed_role_object['Credentials']
+    client=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+    root_acc = client.get_caller_identity().get('Account')
+    print(root_acc)
+    assumerole_iam(client)
+def assumerole_iam(client):
+        assumed_role_object = client.assume_role(RoleArn="arn:aws:iam::528150397796:role/528150397796-Devops-Admin-Role",RoleSessionName="iamautomation")
+        credentials=assumed_role_object['Credentials']
+        iam_client=boto3.client('iam',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],
+        aws_session_token=credentials['SessionToken'])
+        sts_clientroot1=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+        root_acc = sts_clientroot1.get_caller_identity()
+        print(root_acc)
+        fname = 'roles-dev.xlsx'
+        wb = openpyxl.load_workbook(fname)
+        sheet = wb.get_sheet_by_name('Sheet1')
+        for rowOfCellObjects in sheet['A1':'A96']:
+            try:
+                for cellObj in rowOfCellObjects:
+                    #print(cellObj.coordinate, cellObj.value)
+                    v1 = cellObj.value
+                    assumed_role_object = sts_clientroot1.assume_role(RoleArn=v1,RoleSessionName="AssumeRoleSession1")
+                    credentials=assumed_role_object['Credentials']
+                    s3_client=boto3.client('s3',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+                    sts_client1=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+                    account_num = sts_client1.get_caller_identity().get('Account')
+                    print("Switching to",account_num)
+                    s3buckets(s3_client,account_num)
+            except botocore.exceptions.ClientError as error: 
+                print(error)
+                continue
+def s3buckets(s3_client,account_num):
+    response = s3_client.list_buckets()
+    for s3name in response["Buckets"]:
+        bucket_name = s3name['Name']
+        tagging_response = s3_client.get_bucket_tagging(Bucket=bucket_name)
+        existing_tags = tagging_response.get('TagSet',[])
+        updated_tags = existing_tags + [{'Key':'exception','Value':'Yes'}]
+        response = s3_client.put_bucket_tagging(Bucket=bucket_name,Tagging={ 'TagSet': updated_tags })
+        print(updated_tags,f"has been added to {bucket_name} in {account_num}")
+if __name__ == "__main__":
+    main()
