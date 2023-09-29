@@ -1,3 +1,27 @@
+Subject: Request for Work from Home and Return in January
+
+Dear [Manager's Name],
+
+I hope this message finds you well. I would like to formally request the opportunity to work from home starting [desired start date], with the intention of returning to the office in January 2023.
+
+The reason for this request is [briefly explain your reason for requesting work from home, such as health concerns, family needs, or any other relevant reason]. I believe that this arrangement will allow me to continue contributing to the team's success while addressing my personal circumstances.
+
+During this period of remote work, I assure you of my commitment to maintain the same level of productivity and professionalism as I do when working from the office. I will be reachable during regular working hours and remain flexible to attend any necessary meetings or fulfill any responsibilities required by the team.
+
+If it is possible, I would appreciate your guidance on the procedures and any specific expectations for this work-from-home arrangement.
+
+I understand the importance of maintaining a cohesive team and look forward to rejoining the office environment in January. Please let me know if there are any further details or adjustments required for this request.
+
+Thank you for your understanding and consideration of this matter. I am open to discussing this request further if necessary.
+
+Best regards,
+
+[Your Name]
+[Your Employee ID, if applicable]
+[Your Contact Information]
+
+
+
 from multiprocessing import Pool, Process, Manager
 import boto3
 import openpyxl
