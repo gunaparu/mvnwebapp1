@@ -1,3 +1,32 @@
+import boto3
+
+# Initialize IAM client
+iam = boto3.client('iam')
+
+# Name of the IAM role to be deleted
+role_name = 'YOUR_ROLE_NAME'
+
+# Get the role ARN
+response = iam.get_role(RoleName=role_name)
+role_arn = response['Role']['Arn']
+
+# Detach policies from the role
+attached_policies = iam.list_attached_role_policies(RoleName=role_name)['AttachedPolicies']
+for policy in attached_policies:
+    iam.detach_role_policy(RoleName=role_name, PolicyArn=policy['PolicyArn'])
+
+# Remove inline policies from the role
+inline_policies = iam.list_role_policies(RoleName=role_name)['PolicyNames']
+for policy_name in inline_policies:
+    iam.delete_role_policy(RoleName=role_name, PolicyName=policy_name)
+
+# Delete the role
+iam.delete_role(RoleName=role_name)
+
+print(f"IAM role {role_arn} has been removed.")
+
+
+
 Subject: Request for Work from Home and Return in January
 
 Dear [Manager's Name],
