@@ -20,3 +20,30 @@
     }
   ]
 }
+
+
+
+import boto3
+
+def get_s3_bucket_kms_encryption_status():
+    # Initialize Boto3 S3 client
+    s3 = boto3.client('s3')
+
+    # Get list of S3 buckets
+    buckets = s3.list_buckets()
+
+    # Iterate through each bucket and get encryption status
+    for bucket in buckets['Buckets']:
+        bucket_name = bucket['Name']
+        try:
+            # Get bucket encryption configuration
+            encryption = s3.get_bucket_encryption(Bucket=bucket_name)
+            print(f"Bucket: {bucket_name} - KMS Encryption: Enabled")
+        except s3.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == 'ServerSideEncryptionConfigurationNotFoundError':
+                print(f"Bucket: {bucket_name} - KMS Encryption: Not Enabled")
+            else:
+                print(f"Bucket: {bucket_name} - Error: {e}")
+
+if __name__ == "__main__":
+    get_s3_bucket_kms_encryption_status()
