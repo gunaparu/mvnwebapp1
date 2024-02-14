@@ -1,137 +1,40 @@
 import boto3
 
-# Initialize IAM client
-iam = boto3.client('iam')
+def analyze_iam_policy(role_name):
+    iam = boto3.client('iam')
 
-# Name of the IAM role to be deleted
-role_name = 'YOUR_ROLE_NAME'
+    # Get the role's policy
+    role_policy = iam.get_role_policy(
+        RoleName=role_name,
+        PolicyName='AmazonS3FullAccess'  # Change this to your policy name
+    )
 
-# Get the role ARN
-response = iam.get_role(RoleName=role_name)
-role_arn = response['Role']['Arn']
+    # Extract the policy document
+    policy_document = role_policy['PolicyDocument']
 
-# Detach policies from the role
-attached_policies = iam.list_attached_role_policies(RoleName=role_name)['AttachedPolicies']
-for policy in attached_policies:
-    iam.detach_role_policy(RoleName=role_name, PolicyArn=policy['PolicyArn'])
+    # Extract some basic information
+    version = policy_document.get('Version', 'N/A')
+    statement_count = len(policy_document.get('Statement', []))
 
-# Remove inline policies from the role
-inline_policies = iam.list_role_policies(RoleName=role_name)['PolicyNames']
-for policy_name in inline_policies:
-    iam.delete_role_policy(RoleName=role_name, PolicyName=policy_name)
+    print("IAM Policy Analysis:")
+    print(f"Version: {version}")
+    print(f"Number of Statements: {statement_count}")
 
-# Delete the role
-iam.delete_role(RoleName=role_name)
+    # Analyze each statement in the policy
+    for idx, statement in enumerate(policy_document.get('Statement', []), start=1):
+        print(f"\nStatement {idx}:")
+        effect = statement.get('Effect', 'N/A')
+        actions = statement.get('Action', 'N/A')
+        resources = statement.get('Resource', 'N/A')
+        conditions = statement.get('Condition', 'N/A')
 
-print(f"IAM role {role_arn} has been removed.")
+        print(f"Effect: {effect}")
+        print(f"Actions: {actions}")
+        print(f"Resources: {resources}")
+        print(f"Conditions: {conditions}")
 
+# Example IAM role name
+role_name = 'your-role-name'  # Replace 'your-role-name' with your actual IAM role name
 
-
-Subject: Request for Work from Home and Return in January
-
-Dear [Manager's Name],
-
-I hope this message finds you well. I would like to formally request the opportunity to work from home starting [desired start date], with the intention of returning to the office in January 2023.
-
-The reason for this request is [briefly explain your reason for requesting work from home, such as health concerns, family needs, or any other relevant reason]. I believe that this arrangement will allow me to continue contributing to the team's success while addressing my personal circumstances.
-
-During this period of remote work, I assure you of my commitment to maintain the same level of productivity and professionalism as I do when working from the office. I will be reachable during regular working hours and remain flexible to attend any necessary meetings or fulfill any responsibilities required by the team.
-
-If it is possible, I would appreciate your guidance on the procedures and any specific expectations for this work-from-home arrangement.
-
-I understand the importance of maintaining a cohesive team and look forward to rejoining the office environment in January. Please let me know if there are any further details or adjustments required for this request.
-
-Thank you for your understanding and consideration of this matter. I am open to discussing this request further if necessary.
-
-Best regards,
-
-[Your Name]
-[Your Employee ID, if applicable]
-[Your Contact Information]
-
-
-
-from multiprocessing import Pool, Process, Manager
-import boto3
-import openpyxl
-import botocore
-
-def main():
-    sts_client = boto3.client('sts')
-    assumed_role_object = sts_client.assume_role(RoleArn='arn:aws:iam::528150397796:role/IAM_Automation', RoleSessionName="iamautomation", ExternalId="UZZCWIWGSY")
-    credentials = assumed_role_object['Credentials']
-    client = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], aws_secret_access_key=credentials['SecretAccessKey'], aws_session_token=credentials['SessionToken'])
-    root_acc = client.get_caller_identity().get('Account')
-    print(root_acc)
-    assumerole_iam(client)
-
-def assumerole_iam(client):
-    assumed_role_object = client.assume_role(RoleArn="arn:aws:iam::528150397796:role/528150397796-Devops-Admin-Role", RoleSessionName="iamautomation")
-    credentials = assumed_role_object['Credentials']
-    iam_client = boto3.client('iam', aws_access_key_id=credentials['AccessKeyId'], aws_secret_access_key=credentials['SecretAccessKey'], aws_session_token=credentials['SessionToken'])
-    sts_clientroot1 = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], aws_secret_access_key=credentials['SecretAccessKey'], aws_session_token=credentials['SessionToken'])
-    root_acc = sts_clientroot1.get_caller_identity()
-    print(root_acc)
-    fname = 'roles-dev.xlsx'
-    wb = openpyxl.load_workbook(fname)
-    sheet = wb.get_sheet_by_name('Sheet1')
-
-    processes = []
-    for rowOfCellObjects in sheet['A1':'A96']:
-        try:
-            for cellObj in rowOfCellObjects:
-                v1 = cellObj.value
-                process = Process(target=process_s3buckets, args=(v1,))
-                processes.append(process)
-                process.start()
-
-            # Wait for all processes to finish
-            for process in processes:
-                process.join()
-        except botocore.exceptions.ClientError as error:
-            print(error)
-            continue
-
-def process_s3buckets(v1):
-    assumed_role_object = sts_clientroot1.assume_role(RoleArn=v1, RoleSessionName="AssumeRoleSession1")
-    credentials = assumed_role_object['Credentials']
-    s3_client = boto3.client('s3', aws_access_key_id=credentials['AccessKeyId'], aws_secret_access_key=credentials['SecretAccessKey'], aws_session_token=credentials['SessionToken'])
-    sts_client1 = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], aws_secret_access_key=credentials['SecretAccessKey'], aws_session_token=credentials['SessionToken'])
-    account_num = sts_client1.get_caller_identity().get('Account')
-    print("Switching to", account_num)
-    s3buckets(s3_client, account_num)
-
-def s3buckets(s3_client, account_num):
-    response = s3_client.list_buckets()
-    for s3name in response["Buckets"]:
-        bucket_name = s3name['Name']
-        tagging_response = s3_client.get_bucket_tagging(Bucket=bucket_name)
-        existing_tags = tagging_response.get('TagSet', [])
-        updated_tags = existing_tags + [{'Key': 'exception', 'Value': 'Yes'}]
-        response = s3_client.put_bucket_tagging(Bucket=bucket_name, Tagging={'TagSet': updated_tags})
-        print(updated_tags, f"has been added to {bucket_name} in {account_num}")
-
-if __name__ == "__main__":
-    main()
-To configure an S3 bucket as a data source for Azure OpenAI or any other Azure service, you generally won't directly connect the S3 bucket to Azure OpenAI. Instead, you'll typically perform the following steps:
-
-1. **Transfer Data from S3 to Azure Storage:**
-   - Use tools like Azure AzCopy, Azure Storage Explorer, or Azure Data Factory to transfer data from your S3 bucket to an Azure Storage account.
-
-2. **Access Data in Azure Storage:**
-   - Once the data is in Azure Storage, you can access it within your Azure environment. Azure services, including OpenAI, can work with data stored in Azure Storage.
-
-3. **Integrate with Azure OpenAI:**
-   - Depending on the specific requirements of your application, you would then integrate Azure OpenAI with the processed data in Azure Storage.
-
-Here's a simplified example using AzCopy for data transfer:
-
-```bash
-# Install AzCopy if not installed
-# Run the following command to copy data from S3 to Azure Storage
-azcopy copy "s3://your-s3-bucket/*" "https://your-azure-storage.blob.core.windows.net/your-container" --recursive
-```
-
-Replace `"s3://your-s3-bucket/*"` with the path of your S3 bucket and `"https://your-azure-storage.blob.core.windows.net/your-container"` with the URL of your Azure Storage container.
-
-Remember to adapt the commands based on your specific requirements and the tools you prefer to use for data transfer.
+# Analyze the IAM role policy
+analyze_iam_policy(role_name)
