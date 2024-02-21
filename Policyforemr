@@ -38,3 +38,36 @@ role_name = 'your-role-name'  # Replace 'your-role-name' with your actual IAM ro
 
 # Analyze the IAM role policy
 analyze_iam_policy(role_name)
+
+
+import boto3
+import json
+
+def is_permission_in_policy(role_name, permission):
+    # Create IAM client
+    iam_client = boto3.client('iam')
+
+    # Get the policy
+    response = iam_client.get_role_policy(
+        RoleName=role_name,
+        PolicyName='your-policy-name'  # Replace 'your-policy-name' with the actual policy name
+    )
+
+    # Extract policy document
+    policy_document = json.loads(response['PolicyDocument'])
+
+    # Check if permission is in policy
+    for statement in policy_document['Statement']:
+        if 'Action' in statement and permission in statement['Action']:
+            return True
+
+    return False
+
+# Example usage:
+role_name = 'your-role-name'
+permission = 's3:GetObject'  # Replace with the permission you want to check
+is_permission_present = is_permission_in_policy(role_name, permission)
+if is_permission_present:
+    print(f"Permission '{permission}' is present in the policy for role '{role_name}'.")
+else:
+    print(f"Permission '{permission}' is not present in the policy for role '{role_name}'.")
