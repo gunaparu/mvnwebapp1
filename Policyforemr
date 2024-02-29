@@ -104,3 +104,36 @@ def get_attached_policy_documents(account_id):
 account_id = '123456789012'
 get_attached_policy_documents(account_id)
 
+import boto3
+
+def get_attached_policy_documents(account_id):
+    iam_client = boto3.client('iam')
+    
+    # Get a list of IAM roles in the account
+    roles = iam_client.list_roles()['Roles']
+    
+    for role in roles:
+        role_name = role['RoleName']
+        role_arn = role['Arn']
+        
+        # Get a list of attached policies for the current role
+        attached_policies = iam_client.list_attached_role_policies(RoleName=role_name)['AttachedPolicies']
+        
+        print(f"Role: {role_name} ({role_arn})")
+        if attached_policies:
+            for policy in attached_policies:
+                policy_name = policy['PolicyName']
+                policy_arn = policy['PolicyArn']
+                
+                # Get the policy document for the attached policy
+                policy_document = iam_client.get_policy(PolicyArn=policy_arn)['Policy']['DefaultVersionId']
+                
+                print(f"\tAttached Policy: {policy_name} ({policy_arn})")
+                print(f"\tPolicy Document:\n{policy_document}\n")
+        else:
+            print("\tNo attached policies\n")
+
+# Replace '123456789012' with your AWS account ID
+account_id = '123456789012'
+get_attached_policy_documents(account_id)
+
