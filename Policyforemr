@@ -137,3 +137,44 @@ def get_attached_policy_documents(account_id):
 account_id = '123456789012'
 get_attached_policy_documents(account_id)
 
+
+
+import boto3
+import json
+
+def analyze_role_policy(role_name, permissions_to_check):
+    iam_client = boto3.client('iam')
+    
+    try:
+        role = iam_client.get_role(RoleName=role_name)
+        role_policy = iam_client.get_role_policy(RoleName=role_name, PolicyName=role['Role']['AssumeRolePolicyDocument'])
+        policy_document = json.loads(role_policy['PolicyDocument'])
+        permissions = set()
+
+        if 'Statement' in policy_document:
+            for statement in policy_document['Statement']:
+                if 'Action' in statement:
+                    actions = statement['Action']
+                    if isinstance(actions, str):
+                        permissions.add(actions)
+                    elif isinstance(actions, list):
+                        permissions.update(actions)
+
+        print("Permissions found in the role's policy document:")
+        for permission in permissions_to_check:
+            if permission in permissions:
+                print(f"{permission}: Found")
+            else:
+                print(f"{permission}: Not found")
+
+    except iam_client.exceptions.NoSuchEntityException:
+        print(f"Role '{role_name}' not found.")
+
+def main():
+    role_name = 'your_role_name'
+    permissions_to_check = ['s3:GetObject', 'ec2:DescribeInstances', 'iam:ListRoles']  # Add permissions to check here
+
+    analyze_role_policy(role_name, permissions_to_check)
+
+if __name__ == "__main__":
+    main()
