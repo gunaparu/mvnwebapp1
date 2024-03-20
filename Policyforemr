@@ -178,3 +178,82 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+import boto3
+from botocore.exceptions import ClientError
+import csv
+
+def main():
+    try:
+        session = boto3.Session(profile_name='EXPN-NA-DEV-SEC-OPS-DEV')
+        client = session.client('iam', region_name="us-east-1")
+        account_num = session.client('sts').get_caller_identity().get('Account')
+        print("Switching to", account_num)
+
+        s3_perms_allow = ['s3:*', 's3:CreateBucket']
+        ec2_perms_allow = ['ec2:*', 'ec2:CreateInstance', 'ec2:StartInstance']
+        s3_perms_deny = ['s3:DeleteBucket']
+        ec2_perms_deny = ['ec2:StopInstance', 'ec2:AttachInternetGateway', 'ec2:DetachNetworkInterface', 'iam:Create*']
+
+        with open("finalreport.csv", 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(["Role Name", "Policy Name", "S3 Allow", "S3 Deny", "ec2_allow", "ec2_deny", "AccountNum"])
+
+            paginator = client.get_paginator("list_roles")
+            for response in paginator.paginate(PaginationConfig={'MaxItems': 1000}):
+                for role in response['Roles']:
+                    role_name = role["RoleName"]
+                    print("Role name:", role_name)
+
+                    # Fetch policies attached to the role
+                    attached_policies = client.list_attached_role_policies(RoleName=role['RoleName'])['AttachedPolicies']
+                    policies_list = []
+                    s3_allow_list = []
+                    s3_deny_list = []
+                    ec2_allow_list = []
+                    ec2_deny_list = []
+
+                    for policy in attached_policies:
+                        policy_document = client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['DefaultVersionId']
+                        policy_version = client.get_policy_version(PolicyArn=policy['PolicyArn'],
+                                                                   VersionId=policy_document)['PolicyVersion']['Document']
+
+                        for statement in policy_version.get('Statement', []):
+                            effect = statement.get('Effect', 'N/A')
+                            actions = statement.get('Action', 'N/A')
+
+                            if effect == 'Allow':
+                                for s3_perm_allow in s3_perms_allow:
+                                    if s3_perm_allow in actions:
+                                        s3_allow_list.append(s3_perm_allow)
+
+                                for ec2_perm_allow in ec2_perms_allow:
+                                    if ec2_perm_allow in actions:
+                                        ec2_allow_list.append(ec2_perm_allow)
+
+                            elif effect == 'Deny':
+                                for s3_perm_deny in s3_perms_deny:
+                                    if s3_perm_deny in actions:
+                                        s3_deny_list.append(s3_perm_deny)
+
+                                for ec2_perm_deny in ec2_perms_deny:
+                                    if ec2_perm_deny in actions:
+                                        ec2_deny_list.append(ec2_perm_deny)
+
+                    writer.writerow([role_name,
+                                     ','.join(policies_list),
+                                     ','.join(s3_allow_list),
+                                     ','.join(s3_deny_list),
+                                     ','.join(ec2_allow_list),
+                                     ','.join(ec2_deny_list),
+                                     account_num])
+
+                    print(role_name, "---->", policies_list, s3_allow_list, s3_deny_list, ec2_allow_list, ec2_deny_list, account_num)
+
+    except ClientError as e:
+        print("Error:", e)
+
+if __name__ == "__main__":
+    main()
