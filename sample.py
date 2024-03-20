@@ -36,7 +36,7 @@ def main():
     with open("finalreport"+'.csv','w') as f:
         f.write("Role Name"+","+"Policy Name"+","+"S3 Allow"+","+"S3 Deny"+","+"ec2_allow"+","+"ec2_deny"+","+"AccountNum\n")
         try:
-            session = boto3.Session(profile_name='EXPN-NA-DEV-SEC-OPS-DEV')
+            session = boto3.Session(profile_name='')
             client=session.client('iam',region_name="us-east-1")
             account_num = session.client('sts').get_caller_identity().get('Account')
             print("Switching to ", account_num)
