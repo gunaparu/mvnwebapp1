@@ -25,91 +25,165 @@ for file in files:                         # loop through Excel files
 df_total.to_excel('combined_file1.xlsx')
 
 
+
 import boto3
+from datetime import date
 from botocore.exceptions import ClientError
 import pandas as pd
-
+import csv
 def main():
-    # Get available profiles
-    session = boto3.session.Session()
-    profiles = session.available_profiles
-
-    # Initialize CSV file and DataFrame
-    with open("testwrite.csv", 'w') as f:
-        f.write("Role Name,Policy Name,S3 Allow,S3 Deny,ec2 Allow,ec2 Deny,AccountNum\n")
-    cols = ["Role Name", "Policy Name", "S3 Allow", "S3 Deny", "ec2 Allow", "ec2 Deny", "AccountNum"]
-    df = pd.DataFrame(columns=cols)
-
-    try:
-        # Switch to account profile and retrieve IAM client
-        session = boto3.Session(profile_name='EXPN-NA-DEV-SEC-OPS-DEV')
-        iam_client = session.client('iam', region_name="us-east-1")
-        account_num = session.client('sts').get_caller_identity().get('Account')
-        print("Switching to account:", account_num)
-
-        # Paginate through roles
-        paginator = iam_client.get_paginator("list_roles")
-        for response in paginator.paginate(PaginationConfig={'MaxItems': 1000}):
-            for role in response['Roles']:
-                role_name = role["RoleName"]
-
-                # Initialize lists for permissions
-                s3_allow, s3_deny, ec2_allow, ec2_deny = [], [], [], []
-
-                # List attached policies
-                attached_policies = iam_client.list_attached_role_policies(RoleName=role_name)['AttachedPolicies']
-
-                # Process inline policies
-                inline_policy_names = iam_client.list_role_policies(RoleName=role_name)['PolicyNames']
-                for policy_name in inline_policy_names:
-                    role_policy = iam_client.get_role_policy(RoleName=role_name, PolicyName=policy_name)
-                    policy_document = role_policy['PolicyDocument']
-                    for statement in policy_document.get('Statement', []):
-                        process_statement(statement, s3_allow, s3_deny, ec2_allow, ec2_deny)
-
-                # Process attached policies
-                for policy in attached_policies:
-                    policy_document = iam_client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['DefaultVersionId']
-                    response = iam_client.get_policy_version(PolicyArn=policy['PolicyArn'], VersionId=policy_document)
-                    docum = response['PolicyVersion']['Document']
-                    for statement in docum.get('Statement', []):
-                        process_statement(statement, s3_allow, s3_deny, ec2_allow, ec2_deny)
-
-                # Write to CSV and DataFrame
-                with open("testwrite.csv", 'a') as f:
-                    f.write(f"{role_name},{set(attached_policies)},{set(s3_allow)},{set(s3_deny)},{set(ec2_allow)},{set(ec2_deny)},{account_num}\n")
-                df = df.append({"Role Name": role_name, "Policy Name": set(attached_policies),
-                                "S3 Allow": set(s3_allow), "S3 Deny": set(s3_deny),
-                                "ec2 Allow": set(ec2_allow), "ec2 Deny": set(ec2_deny),
-                                "AccountNum": account_num}, ignore_index=True)
-    except ClientError as e:
-        print("Error:", e)
-
-    # Write DataFrame to CSV
-    df.to_csv("testwrite.csv", index=False, mode='a', header=False)
-
-def process_statement(statement, s3_allow, s3_deny, ec2_allow, ec2_deny):
-    effect = statement.get('Effect', 'N/A')
-    actions = statement.get('Action', [])
-    resources = statement.get('Resource', [])
-
-    if isinstance(actions, str):
-        actions = [actions]
-    if isinstance(resources, str):
-        resources = [resources]
-
-    for action in actions:
-        if effect == 'Allow':
-            if action.startswith('s3:'):
-                s3_allow.append(action)
-            elif action.startswith('ec2:'):
-                ec2_allow.append(action)
-        elif effect == 'Deny':
-            if action.startswith('s3:'):
-                s3_deny.append(action)
-            elif action.startswith('ec2:'):
-                ec2_deny.append(action)
-
+    profiles = boto3.session.Session().available_profiles
+    with open("finalreport"+'.csv','w') as f:
+        f.write("Role Name"+","+"Policy Name"+","+"S3 Allow"+","+"S3 Deny"+","+"ec2_allow"+","+"ec2_deny"+","+"AccountNum\n")
+        try:
+            session = boto3.Session(profile_name='EXPN-NA-DEV-SEC-OPS-DEV')
+            client=session.client('iam',region_name="us-east-1")
+            account_num = session.client('sts').get_caller_identity().get('Account')
+            print("Switching to ", account_num)
+            paginator = client.get_paginator("list_roles")
+            for response in paginator.paginate(PaginationConfig={'MaxItems': 1000}):
+                for role in response['Roles']:
+                    s3_perms_allow = ['s3:*','s3:CreateBucket']
+                    ec2_perms_allow = ["ec2:*",'ec2:CreateInstance','ec2:StartInstance']
+                    s3_perms_deny = ['s3:DeleteBucket']
+                    ec2_perms_deny = ['ec2:StopInstance','ec2:AttachInternetGateway','ec2:DetachNetworkInterface','iam:Create*']
+                    policy_name =[]
+                    policy_list = []
+                    s3_allow = []
+                    s3_deny = []
+                    ec2_allow = []
+                    ec2_deny = []
+                    role_name =role["RoleName"] 
+                    listpolicy = client.list_role_policies(RoleName=role["RoleName"])
+                    print("Role name:",role["RoleName"])
+                    innoofpolicies = len(listpolicy['PolicyNames'])
+                    for policies in listpolicy['PolicyNames']:
+                        role_policy = client.get_role_policy(RoleName=role["RoleName"],PolicyName=policies)
+                        policy_document = role_policy['PolicyDocument']
+                        policy_name.append(policies)
+                        for idx, statement in enumerate(policy_document.get('Statement', []), start=1):
+                            try:
+                                effect = statement.get('Effect', 'N/A')
+                                actions = statement.get('Action', 'N/A')
+                                resources = statement.get('Resource', 'N/A')
+                                conditions = statement.get('Condition', 'N/A')
+                                if effect == 'Allow':
+                                    for s3_perm_allow in s3_perms_allow:
+                                        if s3_perm_allow in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            s3_allow.append(s3_perm_allow)
+                                            print(s3_allow)
+                                    for ec2_perm_allow in ec2_perms_allow:    
+                                        if ec2_perm_allow in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            ec2_allow.append(ec2_perm_allow)
+                                            resource = str(resources).replace(",","$")
+                                            print(ec2_allow)
+                                if effect == "Deny":
+                                    for s3_perm_deny in s3_perms_deny:
+                                        if s3_perm_deny in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Effect: {effect}")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            s3_deny.append(s3_perm_deny)
+                                            resource = str(resources).replace(",","$")
+                                            print(s3_deny)
+                                    for ec2_perm_deny in ec2_perms_deny:    
+                                        if ec2_perm_deny in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Effect: {effect}")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            ec2_deny.append(ec2_perm_deny)
+                                            resource = str(resources).replace(",","$")
+                                            print()
+                            except Exception as e1:
+                                print(e1,role['RoleName'],"has an issue",policy_document)
+                                pass
+                    policies_list = str(policy_name).replace(",","$")
+                    response = client.list_attached_role_policies(RoleName=role['RoleName'])
+                    attached_policies = response['AttachedPolicies']
+                    policy_name1 = []
+                    policy_list1 = []
+                    s3_allow1 = []
+                    s3_deny1 = []
+                    ec2_allow1 = []
+                    ec2_deny1 = []
+                    cusnoofpolicies = len(attached_policies)
+                    for policy in attached_policies:
+                        policy_document = client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['DefaultVersionId']
+                        response = client.get_policy(PolicyArn=policy['PolicyArn'])
+                        policy_version = client.get_policy_version(PolicyArn = policy['PolicyArn'], VersionId = response['Policy']['DefaultVersionId'] )
+                        docum = policy_version['PolicyVersion']['Document']
+                        policy_name1.append(policy['PolicyName'])
+                        for idx, statement in enumerate(docum.get('Statement',[]),start=1):
+                            try:
+                                effect = statement.get('Effect', 'N/A')
+                                actions = statement.get('Action', 'N/A')
+                                resources = statement.get('Resource', 'N/A')
+                                conditions = statement.get('Condition', 'N/A')
+                                if effect == 'Allow':
+                                    for s3_perm_allow in s3_perms_allow:
+                                        if s3_perm_allow in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Effect: {effect}")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            s3_allow1.append(s3_perm_allow)
+                                            print(s3_allow1)
+                                    for ec2_perm_allow in ec2_perms_allow:    
+                                        if ec2_perm_allow in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Effect: {effect}")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            ec2_allow1.append(ec2_perm_allow)
+                                            resource = str(resources).replace(",","$")
+                                            print(ec2_allow1)
+                                elif effect == 'Deny':
+                                    for s3_perm_deny in s3_perms_deny:
+                                        if s3_perm_deny in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Effect: {effect}")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            s3_deny1.append(s3_perm_deny)
+                                            resource = str(resources).replace(",","$")
+                                            s3_deny1.append(s3_perm_deny)
+                                            print(s3_deny1)
+                                    for ec2_perm_deny in ec2_perms_deny:    
+                                        if ec2_perm_deny in actions:
+                                            print(f"\nStatement {idx}:")
+                                            print(f"Effect: {effect}")
+                                            print(f"Actions: {actions}")
+                                            action = str(actions).replace(",","$")
+                                            ec2_deny1.append(ec2_perm_deny)
+                                            resource = str(resources).replace(",","$")
+                                            ec2_deny1.append(ec2_perm_deny)
+                                            print(ec2_deny1)                   
+                            except Exception as e1:
+                                print(e1,role['RoleName'],"has an issue",policy_document)
+                                pass 
+                    policies_list1 = str(policy_name1).replace(",","$")
+                    final_policies = policy_name + policy_name1
+                    final_policies_list = str(final_policies).replace(",","$")
+                    final_s3_allow = s3_allow + s3_allow1
+                    final_s3_allow_list = str(final_s3_allow).replace(",","$")
+                    final_s3_deny = s3_deny + s3_deny1
+                    final_s3_deny_list = str(final_s3_deny).replace(",","$")
+                    final_ec2_allow = ec2_allow + ec2_allow1
+                    final_ec2_allow_list = str(final_ec2_allow).replace(",","$")
+                    final_ec2_deny = ec2_deny + ec2_deny1
+                    final_ec2_deny_list = str(final_ec2_deny).replace(",","$")
+                    f.write(role_name+","+str(final_policies_list)+","+str(final_s3_allow_list)+","+str(final_s3_deny_list)+","+str(final_ec2_allow_list)+","+str(final_ec2_deny_list)+","+account_num+"\n")
+                    print(role_name,"---->", final_policies,final_s3_allow,final_s3_deny,final_ec2_allow,final_ec2_deny,account_num)
+        except Exception as e:
+            print("Error",e)
+            pass
 if __name__ == "__main__":
     main()
-
