@@ -304,3 +304,144 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+from multiprocessing.sharedctypes import Value
+import boto3
+from datetime import date
+import xlwings as xw
+import openpyxl
+import botocore
+import pandas as pd
+import csv
+from botocore.exceptions import ClientError
+def main():
+    sts_client = boto3.client('sts')
+    #file_name= 'Accesskeys_'+str(date.today())+".csv"
+    with open("finalreport.csv", 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(["Role Name", "Policy Name", "S3 Allow", "S3 Deny", "ec2_allow", "ec2_deny", "AccountNum"])
+        assumed_role_object = sts_client.assume_role(RoleArn='arn:aws:iam::528150397796:role/IAM_Automation',RoleSessionName="iamautomation",ExternalId="UZZCWIWGSY")
+        credentials=assumed_role_object['Credentials']
+        client=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+        root_acc = client.get_caller_identity().get('Account')
+        print(root_acc)
+        assumerole_iam(client,writer)
+def assumerole_iam(client,writer):
+        assumed_role_object = client.assume_role(RoleArn="arn:aws:iam::528150397796:role/528150397796-Devops-Admin-Role",RoleSessionName="iamautomation")
+        credentials=assumed_role_object['Credentials']
+        iam_client=boto3.client('iam',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],
+        aws_session_token=credentials['SessionToken'])
+        sts_clientroot1=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+        root_acc = sts_clientroot1.get_caller_identity()
+        print(root_acc)
+        fname = 'roles-dev.xlsx'
+        wb = openpyxl.load_workbook(fname)
+        sheet = wb.get_sheet_by_name('Sheet1')
+        for rowOfCellObjects in sheet['A95':'A95']:
+            try:
+                for cellObj in rowOfCellObjects:
+                    #print(cellObj.coordinate, cellObj.value)
+                    v1 = cellObj.value
+                    assumed_role_object = sts_clientroot1.assume_role(RoleArn=v1,RoleSessionName="AssumeRoleSession1")
+                    credentials=assumed_role_object['Credentials']
+                    iam_client=boto3.client('iam',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],
+                    aws_session_token=credentials['SessionToken'])
+                    sts_client1=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],
+                    aws_session_token=credentials['SessionToken'])
+                    account_num = sts_client1.get_caller_identity().get('Account')
+                    #acc_name =   boto3.client('organizations').describe_account(AccountId=account_num).get('Account').get('Name')
+                    users = iam_client.list_users()["Users"]
+                    print("Switching to",account_num)
+                    iam_roles(iam_client,client,writer,account_num)
+            except botocore.exceptions.ClientError as error: 
+                print(error)
+                continue
+def iam_roles(iam_client,client,writer,account_num):    
+    try:
+        s3_perms_allow = ['s3:*', 's3:CreateBucket']
+        ec2_perms_allow = ['ec2:*', 'ec2:CreateInstance', 'ec2:StartInstance']
+        s3_perms_deny = ['s3:DeleteBucket']
+        ec2_perms_deny = ['ec2:StopInstance', 'ec2:AttachInternetGateway', 'ec2:DetachNetworkInterface', 'iam:Create*']
+        paginator = iam_client.get_paginator("list_roles")
+        for response in paginator.paginate(PaginationConfig={'MaxItems': 1000}):
+            for role in response['Roles']:
+                role_name = role["RoleName"]
+                print("Role name:", role_name)
+                # Fetch policies attached to the role
+                attached_policies = iam_client.list_attached_role_policies(RoleName=role['RoleName'])['AttachedPolicies']
+                policies_list = []
+                s3_allow_list = []
+                s3_deny_list = []
+                ec2_allow_list = []
+                ec2_deny_list = []
+                for policy in attached_policies:
+                    policy_document = iam_client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['DefaultVersionId']
+                    policy_version = iam_client.get_policy_version(PolicyArn=policy['PolicyArn'],
+                                                                   VersionId=policy_document)['PolicyVersion']['Document']
+                    try:
+                        for idx, statement in enumerate(policy_version.get('Statement', []), start=1):
+                            effect = statement.get('Effect', 'N/A')
+                            actions = statement.get('Action', 'N/A')
+
+                            if effect == 'Allow':
+                                for s3_perm_allow in s3_perms_allow:
+                                    if s3_perm_allow in actions:
+                                        s3_allow_list.append(s3_perm_allow)
+
+                                for ec2_perm_allow in ec2_perms_allow:
+                                    if ec2_perm_allow in actions:
+                                        ec2_allow_list.append(ec2_perm_allow)
+
+                            elif effect == 'Deny':
+                                for s3_perm_deny in s3_perms_deny:
+                                    if s3_perm_deny in actions:
+                                        s3_deny_list.append(s3_perm_deny)
+
+                                for ec2_perm_deny in ec2_perms_deny:
+                                    if ec2_perm_deny in actions:
+                                        ec2_deny_list.append(ec2_perm_deny)
+                    except Exception as e:
+                        print("error",e)
+                        print(statement,policy_version)
+                        pass
+                    policies_list.append(policy['PolicyName'])
+                # Fetch inline policies attached to the role
+                inline_policies = iam_client.list_role_policies(RoleName=role['RoleName'])['PolicyNames']
+                for policy_name in inline_policies:
+                    policy_version = iam_client.get_role_policy(RoleName=role['RoleName'], PolicyName=policy_name)['PolicyDocument']
+                    try:
+                        for idx, statement in enumerate(policy_version.get('Statement', []), start=1):
+                            effect = statement.get('Effect', 'N/A')
+                            actions = statement.get('Action', 'N/A')
+                            if effect == 'Allow':
+                                for s3_perm_allow in s3_perms_allow:
+                                    if s3_perm_allow in actions:
+                                        s3_allow_list.append(s3_perm_allow)
+
+                                for ec2_perm_allow in ec2_perms_allow:
+                                    if ec2_perm_allow in actions:
+                                        ec2_allow_list.append(ec2_perm_allow)
+
+                            elif effect == 'Deny':
+                                for s3_perm_deny in s3_perms_deny:
+                                    if s3_perm_deny in actions:
+                                        s3_deny_list.append(s3_perm_deny)
+
+                                for ec2_perm_deny in ec2_perms_deny:
+                                    if ec2_perm_deny in actions:
+                                        ec2_deny_list.append(ec2_perm_deny)
+                    except Exception as e:
+                        print("Error:", e)
+                        print(statement,policy_version)
+                        pass
+                    policies_list.append(policy_name)
+                    writer.writerow([role_name, ','.join(policies_list),','.join(s3_allow_list),','.join(s3_deny_list),','.join(ec2_allow_list),','.join(ec2_deny_list),account_num])
+                    print(role_name, "---->", policies_list, s3_allow_list, s3_deny_list, ec2_allow_list, ec2_deny_list, account_num)
+    except Exception as e:
+        print("Error:", e)
+if __name__ == "__main__":
+    main()
+
+
