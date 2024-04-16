@@ -1,4 +1,4 @@
-import os
+ import os
 import pandas as pd
 cwd = os.path.abspath('') 
 files = os.listdir(cwd)  
@@ -167,3 +167,40 @@ if __name__ == "__main__":
             assume_role_and_tag(role_arn, TAG_KEY, TAG_VALUE, ACCESS_KEY, SECRET_KEY, REGION_NAME)
         else:
             print(f"Role ARN '{role_arn}' not in the list of roles to tag.")
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            import boto3
+
+def add_tags_to_iam_role(role_name, additional_tags):
+    # Initialize IAM client
+    iam_client = boto3.client('iam')
+    
+    # Get the current tags associated with the IAM role
+    response = iam_client.list_role_tags(RoleName=role_name)
+    current_tags = response['Tags']
+    
+    # Add additional tags to the existing ones
+    updated_tags = current_tags + additional_tags
+    
+    # Update tags for the IAM role
+    iam_client.tag_role(RoleName=role_name, Tags=updated_tags)
+    print(f"Additional tags added to IAM role {role_name} successfully.")
+
+# Example usage:
+if __name__ == "__main__":
+    # IAM role name
+    role_name = 'your-role-name'
+
+    # Additional tags to add (format: {'Key': 'Value'})
+    additional_tags = [{'Key': 'NewTag', 'Value': 'NewValue'}]
+
+    # Call the function
+    add_tags_to_iam_role(role_name, additional_tags)
