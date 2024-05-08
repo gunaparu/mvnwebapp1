@@ -60,3 +60,87 @@ Best regards,
 [Your Name]
 [Your Position]
 [Your Contact Information]
+
+from multiprocessing.sharedctypes import Value
+import boto3
+from datetime import date
+import xlwings as xw
+import openpyxl
+import botocore
+import pandas as pd
+import json
+from botocore.exceptions import ClientError
+def main():
+  sts_client = boto3.client('sts')
+  assumed_role_object = sts_client.assume_role(RoleArn='arn:aws:iam::528150397796:role/IAM_Automation',RoleSessionName="iamautomation",ExternalId="UZZCWIWGSY")
+  credentials=assumed_role_object['Credentials']
+  client=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+  root_acc = client.get_caller_identity().get('Account')
+  print(root_acc)
+  assumerole_iam(client)
+def assumerole_iam(client):
+  assumed_role_object = client.assume_role(RoleArn="arn:aws:iam::528150397796:role/528150397796-Devops-Admin-Role",RoleSessionName="iamautomation")
+  credentials=assumed_role_object['Credentials']
+  iam_client=boto3.client('iam',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+  sts_clientroot1=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+  root_acc = sts_clientroot1.get_caller_identity()
+  print(root_acc)
+  fname = 'Prodaccounts.xlsx'
+  wb = openpyxl.load_workbook(fname)
+  sheet = wb.get_sheet_by_name('Sheet1')
+  for rowOfCellObjects in sheet['A2':'A2']:
+    try:
+      for cellObj in rowOfCellObjects:
+        #print(cellObj.coordinate, cellObj.value)
+        v1 = cellObj.value
+        assumed_role_object = sts_clientroot1.assume_role(RoleArn=v1,RoleSessionName="AssumeRoleSession1")
+        credentials=assumed_role_object['Credentials']
+        iam_client=boto3.client('iam',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+        sts_client1=boto3.client('sts',aws_access_key_id=credentials['AccessKeyId'],aws_secret_access_key=credentials['SecretAccessKey'],aws_session_token=credentials['SessionToken'])
+        account_num = sts_client1.get_caller_identity().get('Account')
+        #acc_name =   boto3.client('organizations').describe_account(AccountId=account_num).get('Account').get('Name') 
+        additional_tags = [{'Key': 'role_type', 'Value': 'service'}]
+        additional_tags1 = [{'Key': 'role_type', 'Value': 'core'}]
+        f = open("issues-service.csv",'w')
+        f1 = open("issues-core.csv",'w')
+        print("Switching to",account_num)
+        service_roles(iam_client,additional_tags,account_num,f)
+        core_roles(iam_client,additional_tags1,account_num,f1)
+    except botocore.exceptions.ClientError as error:
+      print(error)
+      continue  
+def service_roles(iam_client,additional_tags,account_num,f):
+  #role_names =['rds-monitoring-role','CloudabilityRole','WizAccess-Role','Okta-Idp-cross-account-role','stacksets-exec-c1c1605357571231990026442703']
+  role_names =['stacksets-exec-c1c1b0535f75d712e3199a0026442703']
+  cmr_role=account_num+"-cloud-management-Role"
+  role_names.append(cmr_role)
+  try:
+    for role_name in role_names:
+      response = iam_client.list_role_tags(RoleName=role_name)
+      current_tags = response['Tags']
+      # Add additional tags to the existing ones
+      updated_tags = current_tags + additional_tags
+      # Update tags for the IAM role
+      iam_client.tag_role(RoleName=role_name, Tags=updated_tags)
+      print(f"Additional tags added to IAM role {role_name} successfully.")
+  except Exception as e:
+    print(e)
+    f.write(role_name+","+account_num+","+str(e)+"\n")
+    pass
+        
+def core_roles(iam_client,additional_tags1,account_num,f1):
+  try:
+    role_name = account_num+"-DBE-Role"
+    response = iam_client.list_role_tags(RoleName=role_name)
+    current_tags = response['Tags']
+    # Add additional tags to the existing ones
+    updated_tags = current_tags + additional_tags1
+    # Update tags for the IAM role
+    iam_client.tag_role(RoleName=role_name, Tags=updated_tags)
+    print(f"Additional tags added to IAM role {role_name} successfully.")
+  except Exception as e:
+    print(e)
+    f1.write(role_name+","+account_num+","+str(e)+"\n")
+    pass
+if __name__ == "__main__":
+    main()
