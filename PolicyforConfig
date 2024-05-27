@@ -47,3 +47,41 @@ def get_s3_bucket_kms_encryption_status():
 
 if __name__ == "__main__":
     get_s3_bucket_kms_encryption_status()
+
+
+
+
+
+
+
+
+
+
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Sid":"DenyForRoleModification",
+         "Effect":"Deny",
+         "Action":[
+            "iam:AttachRolePolicy",
+            "iam:DeleteRolePolicy",
+            "iam:DetachRolePolicy",
+            "iam:PutRolePolicy",
+            "iam:UpdateAssumeRolePolicy",
+            "iam:TagRole",
+            "iam:UntagRole"
+         ],
+         "Resource":[
+            "*"
+         ],
+         "Condition":{
+            "StringEqualsIfExists":{
+               "aws:ResourceTag/role_function":[
+                  "core/service"
+               ]
+            }
+         }
+      }
+   ]
+}
