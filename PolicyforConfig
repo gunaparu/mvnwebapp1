@@ -47,3 +47,14 @@ def get_s3_bucket_kms_encryption_status():
 
 if __name__ == "__main__":
     get_s3_bucket_kms_encryption_status()
+
+
+
+
+
+
+
+
+
+As part of our IAM roles rationalization, we found the “AWS-Admin” role across all accounts with no usage. Moreover, it has administrator access and no usage. We are currently analyzing the reason behind the creation of this role across all accounts. If this role is no longer needed, we can delete it. Please advise us on this.
+
