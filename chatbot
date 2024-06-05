@@ -1,0 +1,40 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyModificationOfDefaultSG",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "ec2:IsDefault": "true"
+                }
+            }
+        }
+    ]
+}
+
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyAddingPublicIPRange",
+            "Effect": "Deny",
+            "Action": [
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "ec2:IpRanges": "0.0.0.0/0"
+                }
+            }
+        }
+    ]
+}
