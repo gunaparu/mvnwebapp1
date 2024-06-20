@@ -41,4 +41,121 @@
 
 
 
+import boto3
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+
+# Initialize boto3 client
+ses = boto3.client('ses', region_name='us-west-2')
+
+# Define sender and recipient
+SENDER = "Sender Name <sender@example.com>"
+RECIPIENT = "recipient@example.com"
+SUBJECT = "CIS AWS IAM Roles Rationalization – NIL Usage Roles Clean-up"
+
+# Define the HTML content
+HTML_BODY = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+        }
+        .header img {
+            max-height: 50px;
+            margin-right: 20px;
+        }
+        .content {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="cid:logo_cis" alt="CIS">
+            <img src="cid:logo_experian" alt="Experian">
+        </div>
+        <h1>CIS AWS IAM Roles Rationalization – NIL Usage Roles Clean-up</h1>
+        <h2>What is happening?</h2>
+        <p>The CIS DevSecOps team is working with CIS Ascend Platform team to clean up all CIS AWS IAM roles that were not used in the last 6 months.</p>
+        <h2>Why is this relevant to you?</h2>
+        <p>You're the owner of the AWS account(s) and/or IAM Roles for one or more AWS accounts.</p>
+        <h2>What is in scope?</h2>
+        <p>List of IAM Roles with NIL usage: <a href="https://example.com/link/to/Roles-NIL-Usage.xlsx">Roles - NIL Usage.xlsx</a></p>
+        <h2>What will happen?</h2>
+        <ul>
+            <li>The IAM roles in the above shared report will be deleted from the respective AWS accounts by June 07, 2023.</li>
+            <li>If you want to retain any role, please let us know by June 02, 2023.</li>
+            <li>If you fail to respond to this notification, we consider it as approval to proceed and delete IAM Roles in your account.</li>
+            <li>If you need any of those roles afterwards, you must create them afresh as new with security guidelines recommended & consider the ETAs accordingly.</li>
+        </ul>
+        <h2>Who should I contact for any queries on Roles Audit/Consolidation effort?</h2>
+        <p>For more details, please visit <a href="https://pages.experian.com/x/t7N2Q">this link</a>. For further queries, please reach out to <a href="mailto:CIS-DevSecOps@experian.com">CIS-DevSecOps@experian.com</a> or <a href="mailto:PE-SRE@experian.com">PE-SRE@experian.com</a>.</p>
+        <p>Created by CIS DevSecOps Team</p>
+    </div>
+</body>
+</html>
+"""
+
+# Define the plain text content
+BODY_TEXT = ("CIS AWS IAM Roles Rationalization - NIL Usage Roles Clean-up\r\n"
+             "The CIS DevSecOps team is working with CIS Ascend Platform team to clean up all CIS AWS IAM roles that were not used in the last 6 months.\r\n")
+
+# Create a multipart/mixed parent container
+msg = MIMEMultipart('mixed')
+msg['Subject'] = SUBJECT
+msg['From'] = SENDER
+msg['To'] = RECIPIENT
+
+# Create a multipart/alternative child container
+msg_body = MIMEMultipart('alternative')
+
+# Encode the text and HTML content and set the character encoding
+textpart = MIMEText(BODY_TEXT, 'plain', 'utf-8')
+htmlpart = MIMEText(HTML_BODY, 'html', 'utf-8')
+
+# Add the text and HTML parts to the child container
+msg_body.attach(textpart)
+msg_body.attach(htmlpart)
+
+# Attach the multipart/alternative child container to the multipart/mixed parent container
+msg.attach(msg_body)
+
+# Load images and attach them to the message
+with open("path/to/logo_cis.png", 'rb') as img:
+    mime_image = MIMEImage(img.read())
+    mime_image.add_header('Content-ID', '<logo_cis>')
+    msg.attach(mime_image)
+
+with open("path/to/logo_experian.png", 'rb') as img:
+    mime_image = MIMEImage(img.read())
+    mime_image.add_header('Content-ID', '<logo_experian>')
+    msg.attach(mime_image)
+
+# Send the email
+try:
+    response = ses.send_raw_email(
+        Source=SENDER,
+        Destinations=[RECIPIENT],
+        RawMessage={
+            'Data': msg.as_string(),
+        },
+    )
+except Exception as e:
+    print(f"Error: {e}")
+else:
+    print(f"Email sent! Message ID: {response['MessageId']}")
 
