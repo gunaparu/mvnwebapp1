@@ -159,3 +159,266 @@ except Exception as e:
 else:
     print(f"Email sent! Message ID: {response['MessageId']}")
 
+
+
+
+
+
+
+
+
+[
+  {
+    "actions": {
+      "elements": [
+        "redshift:AuthorizeSnapshotAccess",
+        "redshift:DeleteClusterSnapshot",
+        "redshift:RevokeSnapshotAccess"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#1",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "arn:aws:redshift:*:*:snapshot:*wiz-autogen-*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "redshift:CopyClusterSnapshot"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#2",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "redshift:CreateTags"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#3",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "arn:aws:redshift:*:*:snapshot:*/*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "redshift:DescribeClusterSnapshots",
+        "redshift:DescribeClusters"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#4",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "redshift:CreateClusterSnapshot"
+      ],
+      "isExceptionList": false
+    },
+    "awsCondition": {
+      "StringEquals": {
+        "aws:RequestTag/wiz": "auto-gen-snapshot"
+      }
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#5",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "rds:AddTagsToResource",
+        "rds:DescribeDBClusterSnapshots",
+        "rds:DescribeDBClusters",
+        "rds:DescribeDBInstances",
+        "rds:DescribeDBSnapshots",
+        "rds:DescribeDBSubnetGroups",
+        "rds:ListTagsForResource"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#6",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "rds:DeleteDBClusterSnapshot",
+        "rds:ModifyDBClusterSnapshotAttribute"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#7",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "arn:aws:rds:*:*:cluster-snapshot:wiz-autogen-*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "rds:CopyDBClusterSnapshot",
+        "rds:CopyDBSnapshot"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#8",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "rds:DeleteDBSnapshot",
+        "rds:ModifyDBSnapshotAttribute"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#9",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "arn:aws:rds:*:*:snapshot:wiz-autogen-*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "rds:CreateDBClusterSnapshot",
+        "rds:CreateDBSnapshot"
+      ],
+      "isExceptionList": false
+    },
+    "awsCondition": {
+      "StringEquals": {
+        "rds:req-tag/wiz": "auto-gen-snapshot"
+      }
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#10",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3express:CreateSession"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#11",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "kms:CreateGrant",
+        "kms:ReEncrypt*"
+      ],
+      "isExceptionList": false
+    },
+    "awsCondition": {
+      "StringLike": {
+        "kms:ViaService": "rds.*.amazonaws.com"
+      }
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#12",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  },
+  {
+    "actions": {
+      "elements": [
+        "dynamodb:DescribeTable",
+        "dynamodb:Scan"
+      ],
+      "isExceptionList": false
+    },
+    "effect": "RawAccessPolicyEffectAllow",
+    "id": "#13",
+    "principals": null,
+    "resources": {
+      "elements": [
+        "*"
+      ],
+      "isExceptionList": false
+    }
+  }
+]
