@@ -421,3 +421,171 @@ else:
     }
   }
 ]
+
+Certainly! Below is a detailed explanation of each test case, including steps on how to test them in the context of a Data Security Posture Management (DSPM) solution like Wiz.io.
+
+### 1. **Data Discovery and Classification**
+
+- **Test Case 1: Discover All Data Repositories**
+  - **Objective:** Verify that Wiz.io can automatically discover all data repositories across your environment.
+  - **How to Test:**
+    1. Connect Wiz.io to your cloud and on-prem environments.
+    2. Ensure that the tool has access to the necessary API permissions to scan the environment.
+    3. Trigger a data discovery scan.
+    4. Review the list of discovered repositories (databases, cloud storage, etc.).
+    5. Compare the list with an inventory you already maintain to check for completeness.
+    6. Confirm that all known repositories are discovered and listed in the tool.
+
+- **Test Case 2: Data Classification by Sensitivity**
+  - **Objective:** Test Wiz.io's ability to classify discovered data by sensitivity.
+  - **How to Test:**
+    1. After discovery, inspect the classified data in Wiz.io.
+    2. Validate that sensitive data types (e.g., PII, PHI, PCI) are correctly identified and labeled.
+    3. Cross-check a sample of the classified data against known records to ensure accuracy.
+    4. Test by injecting synthetic sensitive data (e.g., dummy credit card numbers) into a repository and ensure that Wiz.io identifies and classifies it correctly.
+
+- **Test Case 3: Identification of Unstructured Data**
+  - **Objective:** Validate that Wiz.io correctly identifies and classifies unstructured data in cloud storage systems.
+  - **How to Test:**
+    1. Place various types of unstructured data (e.g., PDFs, CSVs, images) in cloud storage buckets.
+    2. Run a classification scan in Wiz.io.
+    3. Verify that the tool correctly identifies and classifies unstructured data according to content and sensitivity.
+
+### 2. **Risk and Vulnerability Identification**
+
+- **Test Case 4: Identify Misconfigured Security Settings**
+  - **Objective:** Ensure Wiz.io identifies data repositories with weak or misconfigured security settings.
+  - **How to Test:**
+    1. Intentionally misconfigure a cloud storage bucket (e.g., set it to public).
+    2. Run a security posture scan in Wiz.io.
+    3. Verify that the tool flags the misconfigured repository and details the specific risk.
+
+- **Test Case 5: Detect Vulnerabilities in Access Controls**
+  - **Objective:** Test Wiz.io’s ability to detect vulnerabilities in data access control mechanisms.
+  - **How to Test:**
+    1. Assign overly permissive IAM roles or access policies to a data repository.
+    2. Perform a security scan.
+    3. Review Wiz.io’s findings to ensure that it identifies and reports excessive privileges.
+
+- **Test Case 6: Sensitive Data Exposure in Non-Production Environments**
+  - **Objective:** Verify detection of sensitive data exposure in non-production environments.
+  - **How to Test:**
+    1. Place sensitive data (e.g., PII) in a non-production environment (e.g., a development database).
+    2. Configure Wiz.io to scan all environments, including non-production.
+    3. Confirm that the tool flags the presence of sensitive data in the non-production environment.
+
+### 3. **Compliance and Policy Enforcement**
+
+- **Test Case 7: Compliance Mapping**
+  - **Objective:** Check that Wiz.io can map discovered data to relevant compliance frameworks.
+  - **How to Test:**
+    1. Enable compliance frameworks relevant to your organization (e.g., GDPR, HIPAA) in Wiz.io.
+    2. Review the mapping of discovered data to these frameworks.
+    3. Ensure that sensitive data is correctly mapped and that compliance gaps are identified.
+
+- **Test Case 8: Policy Enforcement**
+  - **Objective:** Test Wiz.io’s ability to enforce data security policies.
+  - **How to Test:**
+    1. Create a security policy in Wiz.io (e.g., restrict public access to PII).
+    2. Apply this policy across your environment.
+    3. Intentionally violate the policy by making PII data public.
+    4. Verify that Wiz.io detects the violation and alerts or enforces remediation actions.
+
+- **Test Case 9: Compliance Reporting**
+  - **Objective:** Ensure that Wiz.io can generate compliance reports and audit logs.
+  - **How to Test:**
+    1. After running compliance scans, generate a compliance report in Wiz.io.
+    2. Review the report for completeness, accuracy, and alignment with regulatory requirements.
+    3. Test audit log functionality by checking the records of scans, changes, and enforcement actions.
+
+### 4. **Real-Time Monitoring and Alerting**
+
+- **Test Case 10: Real-Time Monitoring**
+  - **Objective:** Validate that Wiz.io provides real-time monitoring of data access.
+  - **How to Test:**
+    1. Enable real-time monitoring features in Wiz.io.
+    2. Perform typical and atypical data access actions (e.g., access sensitive data from a new IP address).
+    3. Confirm that Wiz.io logs these activities in real-time and flags any suspicious behavior.
+
+- **Test Case 11: SIEM Integration**
+  - **Objective:** Test integration with SIEM or SOC platforms.
+  - **How to Test:**
+    1. Configure Wiz.io to send alerts to your SIEM system.
+    2. Trigger various data security incidents.
+    3. Confirm that alerts are received and correctly categorized in the SIEM.
+
+- **Test Case 12: Alert Prioritization**
+  - **Objective:** Verify that Wiz.io prioritizes incidents based on risk levels.
+  - **How to Test:**
+    1. Generate different types of alerts (e.g., low, medium, and high risk).
+    2. Review how Wiz.io categorizes and prioritizes these alerts.
+    3. Ensure that high-risk incidents are escalated appropriately.
+
+### 5. **Data Masking and Encryption**
+
+- **Test Case 13: Identify Unencrypted Data**
+  - **Objective:** Ensure Wiz.io can identify unencrypted sensitive data.
+  - **How to Test:**
+    1. Store sensitive data in an unencrypted state within a database or storage system.
+    2. Run a scan in Wiz.io.
+    3. Verify that the tool identifies and flags the unencrypted data.
+
+- **Test Case 14: Automatic Data Masking/Encryption**
+  - **Objective:** Test the ability to apply data masking or encryption.
+  - **How to Test:**
+    1. Configure Wiz.io to apply masking/encryption to sensitive data.
+    2. Perform a scan and trigger the masking/encryption feature.
+    3. Verify that the sensitive data is appropriately masked/encrypted and access controls are applied.
+
+- **Test Case 15: Encryption Status Reporting**
+  - **Objective:** Validate that Wiz.io can report on encryption status across repositories.
+  - **How to Test:**
+    1. Enable encryption on some data repositories while leaving others unencrypted.
+    2. Run a scan to check the encryption status.
+    3. Review the results in Wiz.io to ensure accurate reporting on which data is encrypted and the strength of encryption.
+
+### 6. **Access Control and User Behavior Analytics**
+
+- **Test Case 16: Analyze Access Control Policies**
+  - **Objective:** Test Wiz.io’s capability to analyze access control policies.
+  - **How to Test:**
+    1. Set up access control policies in your environment.
+    2. Run a scan in Wiz.io to analyze these policies.
+    3. Check the findings for any accounts with unnecessary or excessive privileges and compare with known baselines.
+
+- **Test Case 17: Detect Unusual Access Patterns**
+  - **Objective:** Validate that Wiz.io detects unusual access patterns.
+  - **How to Test:**
+    1. Simulate unusual access patterns (e.g., accessing data from unusual locations or by unusual accounts).
+    2. Review Wiz.io’s monitoring logs and alerts.
+    3. Confirm that the tool detects and alerts on these patterns.
+
+- **Test Case 18: Integration with IAM Systems**
+  - **Objective:** Ensure Wiz.io can integrate with IAM systems for enforcing least privilege.
+  - **How to Test:**
+    1. Connect Wiz.io to your IAM system.
+    2. Analyze user roles and privileges in Wiz.io.
+    3. Check if the tool can suggest and enforce adjustments to user roles based on the principle of least privilege.
+
+### 7. **Incident Response and Remediation**
+
+- **Test Case 19: Automated Incident Response**
+  - **Objective:** Validate Wiz.io’s ability to generate automated incident response workflows.
+  - **How to Test:**
+    1. Trigger a data security incident (e.g., unauthorized data access).
+    2. Review Wiz.io’s automated incident response.
+    3. Check if it correctly suggests or performs actions like revoking access, isolating data, or notifying stakeholders.
+
+- **Test Case 20: Effectiveness of Remediation Suggestions**
+  - **Objective:** Test the effectiveness of remediation suggestions.
+  - **How to Test:**
+    1. Generate various types of security alerts.
+    2. Review Wiz.io’s remediation suggestions.
+    3. Implement the suggestions and assess their effectiveness in mitigating risks.
+
+### 8. **Data Governance and Auditing**
+
+- **Test Case 21: Data Inventory Management**
+  - **Objective:** Test Wiz.io’s capability to maintain a data inventory with detailed metadata.
+  - **How to Test:**
+   
