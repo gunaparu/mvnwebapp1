@@ -696,3 +696,26 @@ doc.add_paragraph("Steps to Test:")
 doc.add_paragraph("1. Setup: Define internal data security policies within Wiz.io (e.g., all sensitive data must be encrypted, access must be logged).", style='List Number')
 doc.add_paragraph("2. Execution: Perform regular scans and audits to check compliance with these policies.", style='List Number')
 doc.add_paragraph("3. Verification: Review the compliance audit results, ensuring they accurately reflect adherence to the policies.", style='List Number')
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template to create an IAM Role with specific tags
+
+Resources:
+  TestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: TestRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 
+                - ec2.amazonaws.com # Replace this with the appropriate service or entity
+            Action: 
+              - sts:AssumeRole
+      Tags:
+        - Key: role_function
+          Value: Core
+        - Key: role_function
+          Value: Service
