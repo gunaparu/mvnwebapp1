@@ -144,3 +144,47 @@ def core_roles(iam_client,additional_tags1,account_num,f1):
     pass
 if __name__ == "__main__":
     main()
+
+
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to create an IAM role with a tag, allow EC2 service to assume it, and grant S3 access.
+
+Resources:
+  TestRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: TestRole
+      AssumeRolePolicyDocument: 
+        Version: '2012-10-17'
+        Statement: 
+          - Effect: Allow
+            Principal: 
+              Service: 
+                - ec2.amazonaws.com
+            Action: 
+              - sts:AssumeRole
+      Tags:
+        - Key: role_function
+          Value: core
+      Path: "/"
+
+  # Attach a policy to the role to allow S3 access
+  TestRoleS3Policy:
+    Type: AWS::IAM::Policy
+    Properties: 
+      PolicyName: TestRoleS3Policy
+      Roles: 
+        - Ref: TestRole
+      PolicyDocument: 
+        Version: '2012-10-17'
+        Statement: 
+          - Effect: Allow
+            Action: 
+              - "s3:ListBucket"
+              - "s3:GetObject"
+              - "s3:PutObject"
+              - "s3:DeleteObject"
+            Resource: 
+              - "arn:aws:s3:::your-bucket-name"
+              - "arn:aws:s3:::your-bucket-name/*"
