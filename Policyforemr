@@ -91,3 +91,27 @@ Cyera DSPM PoC Steps for AWS Account (Past Tense)
 	•	Provided feedback to Cyera regarding any areas for improvement.
 	•	Decided on full deployment:
 	•	Based on the performance of the PoC, decided whether to proceed with full deployment of Cyera DSPM across AWS accounts.
+
+
+
+
+PoC for Wiz.io DSPM on AWS Accounts
+
+During the Proof of Concept (PoC), Wiz.io’s DSPM capabilities were validated across multiple AWS accounts. The focus was on assessing the platform’s ability to identify, classify, and secure sensitive data, including Personally Identifiable Information (PII) and other critical business data within AWS.
+
+	1.	Account Integration and Configuration:
+	•	AWS accounts were successfully onboarded into Wiz.io using IAM roles and security credentials. Permissions were set up to allow non-intrusive scans of various AWS services like S3, RDS, and DynamoDB.
+	2.	Data Discovery and Classification:
+	•	Wiz.io accurately identified structured and unstructured data across S3 buckets, RDS instances, and other AWS data stores. It also successfully classified sensitive data such as PII, financial records, and intellectual property based on predefined policies and custom rules.
+	3.	Security Posture and Risk Evaluation:
+	•	The platform provided a comprehensive risk analysis, flagging misconfigurations, overexposed S3 buckets, and unnecessary public access permissions. It identified potential security vulnerabilities and compliance risks associated with data handling in the cloud environment.
+	4.	Remediation Recommendations:
+	•	Wiz.io offered actionable insights and prioritized remediation steps to mitigate identified risks. It recommended adjusting IAM policies, enforcing encryption standards, and limiting data access based on the principle of least privilege.
+	5.	Reporting and Dashboard Insights:
+	•	The Wiz.io dashboard effectively displayed a real-time summary of security risks and data exposure levels. Detailed reports were generated, highlighting key findings and offering recommendations for improving data security posture.
+	6.	Collaboration and Automation:
+	•	The platform supported integrations with third-party security tools and automated workflows for addressing discovered issues. Incident management processes were streamlined through native integrations with existing alerting and monitoring systems.
+
+The PoC demonstrated Wiz.io’s strong capabilities in enhancing data security posture within AWS environments, providing clear visibility into data risks and actionable remediation steps.
+
+
