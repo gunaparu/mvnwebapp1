@@ -188,3 +188,86 @@ Resources:
             Resource: 
               - "arn:aws:s3:::your-bucket-name"
               - "arn:aws:s3:::your-bucket-name/*"
+
+
+
+
+
+
+
+
+
+Wiz.io DSPM PoC Steps for AWS Account:
+
+1. Setup Wiz.io Account:
+
+	•	Create Wiz.io account: If not already created, sign up for a Wiz.io account via their website.
+	•	Request a demo or trial license: Reach out to Wiz.io for a trial license or use the demo environment if needed.
+
+2. Integrate AWS Account with Wiz.io:
+
+	•	Create a Read-Only IAM Role for Wiz.io:
+	•	In the AWS Management Console, navigate to IAM.
+	•	Create a new IAM role for Cross-Account Access.
+	•	Assign Wiz.io’s external AWS account ID and specify the external ID provided by Wiz.io.
+	•	Attach necessary read-only policies, e.g., AWS managed policies like SecurityAudit and other policies specific to data access.
+	•	Note down the Role ARN for integration with Wiz.io.
+	•	Connect AWS account:
+	•	In Wiz.io, navigate to Cloud Integrations and choose AWS.
+	•	Use the IAM Role ARN created earlier and integrate the account with Wiz.io.
+	•	Allow Wiz.io to scan data stores (such as S3, RDS, Redshift) and services.
+
+3. Initial Scan Setup:
+
+	•	Start initial data scan:
+	•	Wiz.io will begin scanning your AWS environment.
+	•	Ensure that key data stores like S3 buckets, RDS databases, Redshift clusters, and EBS snapshots are included.
+	•	Wiz.io will scan for sensitive data types such as PII, PCI, PHI, and other compliance-related information.
+
+4. Monitor and Analyze Data Sensitivity Findings:
+
+	•	Review sensitive data:
+	•	After the scan, Wiz.io will categorize data based on sensitivity levels (e.g., PII, PHI).
+	•	Navigate to the Wiz.io dashboard and check the findings by sensitive data category, compliance (GDPR, HIPAA, etc.), and location within AWS data stores.
+	•	Validate scan results:
+	•	Review the accuracy of the sensitive data identified.
+	•	Confirm whether Wiz.io correctly identifies both structured and unstructured sensitive data.
+
+5. Validate Risk Analysis and Prioritization:
+
+	•	Risk prioritization:
+	•	Wiz.io assesses risks across the cloud infrastructure, such as exposed data, excessive permissions, encryption misconfigurations, etc.
+	•	Review the Risk Prioritization dashboard to see critical vulnerabilities associated with sensitive data.
+	•	Simulate real-world risks:
+	•	Validate how Wiz.io highlights risks based on real-world scenarios like publicly exposed S3 buckets, unsecured RDS instances, or sensitive data without encryption.
+
+6. Automate Remediation:
+
+	•	Test auto-remediation features:
+	•	Wiz.io provides suggestions or automation for remediating high-risk issues (e.g., restricting public access to S3, enabling encryption on RDS).
+	•	Verify how Wiz.io’s automated workflows handle remediation recommendations.
+	•	Integrate with ticketing systems:
+	•	Test integrations with existing systems like Jira, ServiceNow, or Slack for ticketing and alerting workflows.
+
+7. Reporting and Compliance Checks:
+
+	•	Generate reports:
+	•	Use Wiz.io to create reports summarizing data security issues and risk mitigation efforts. This could include data protection, encryption, access control, and compliance.
+	•	Test compliance-specific reports such as GDPR, HIPAA, or PCI DSS.
+	•	Share reports with stakeholders:
+	•	Share detailed findings and actions with internal security and compliance teams to demonstrate the platform’s effectiveness.
+
+8. Review & Finalize PoC:
+
+	•	Evaluate coverage and performance:
+	•	Assess the depth and breadth of Wiz.io’s data discovery, risk identification, and remediation capabilities.
+	•	Ensure Wiz.io discovers all critical data stores and security risks in your AWS environment.
+	•	Feedback and improvements:
+	•	Provide feedback to Wiz.io on specific findings or improvements needed based on your environment.
+
+9. Decision-Making:
+
+	•	Summarize PoC findings:
+	•	Compile the findings of the PoC for internal review. Highlight key features, results, and business value.
+	•	Next steps:
+	•	Decide whether to proceed with full deployment or explore other vendors if needed.
