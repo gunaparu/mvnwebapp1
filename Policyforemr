@@ -1,1 +1,93 @@
+Cyera DSPM PoC Steps for AWS Account (Past Tense)
 
+1. Setup Cyera Account:
+
+	•	Signed up for Cyera: A Cyera account was registered via their website or access to a demo or trial was requested.
+	•	Obtained PoC license: Reached out to Cyera to obtain a PoC license or trial environment.
+
+2. Integrated AWS Account with Cyera:
+
+	•	Created a Read-Only IAM Role for Cyera:
+	•	Navigated to the AWS Management Console and created a new IAM role for cross-account access, using Cyera’s AWS account ID and external ID provided by Cyera.
+	•	Attached the required policies, including:
+	•	SecurityAudit (AWS-managed policy)
+	•	AmazonS3ReadOnlyAccess
+	•	Other service-specific policies for data store scanning.
+	•	Saved the Role ARN for integration.
+	•	Connected AWS account:
+	•	In Cyera, navigated to the Cloud Integrations section and selected AWS.
+	•	Entered the Role ARN from the IAM role and enabled scanning for data stores like S3, RDS, DynamoDB, and any other relevant services.
+
+3. Configured Initial Data Scan:
+
+	•	Started the initial data discovery scan:
+	•	Initiated Cyera’s discovery scan across the AWS environment, ensuring key data sources were included, such as:
+	•	S3 buckets
+	•	RDS instances
+	•	DynamoDB tables
+	•	EBS volumes
+	•	Enabled Cyera to identify sensitive data types like PII, PCI, PHI, and other critical data categories.
+	•	Scanned unstructured and structured data:
+	•	Verified that Cyera scanned both structured (e.g., RDS, DynamoDB) and unstructured (e.g., S3, EBS) data for sensitive information.
+
+4. Monitored Discovery and Classification of Sensitive Data:
+
+	•	Reviewed discovered data:
+	•	After the scan was completed, accessed the Cyera dashboard to review the results.
+	•	Validated the accuracy of Cyera’s data classification for sensitive categories, such as PII, financial data (PCI), and health information (PHI).
+	•	Reviewed tagging and metadata:
+	•	Checked how Cyera tagged sensitive data and assessed whether it provided sufficient metadata (e.g., location, data type, sensitivity).
+
+5. Analyzed Risk Assessment and Prioritization:
+
+	•	Examined risk overview:
+	•	Explored Cyera’s risk assessment to understand which data was at risk based on exposure, access controls, or encryption.
+	•	Reviewed risk prioritization based on:
+	•	Publicly accessible data (S3 buckets, etc.)
+	•	Misconfigured permissions
+	•	Unencrypted sensitive data
+	•	Assessed cross-account and excessive access risks:
+	•	Confirmed whether Cyera identified excessive access across different accounts, users, or roles that could compromise sensitive data.
+
+6. Tested Remediation Features:
+
+	•	Reviewed remediation suggestions:
+	•	Explored Cyera’s recommended remediations for identified risks, such as adjusting access controls, enabling encryption, or modifying policies.
+	•	Tested whether Cyera offered suggestions for correcting misconfigurations (e.g., closing public S3 access).
+	•	Created custom workflows:
+	•	Where applicable, set up custom workflows to automate remediation and integrated with tools like Jira for issue tracking.
+
+7. Evaluated Policy Enforcement and Compliance Features:
+
+	•	Set up custom policies:
+	•	Tested Cyera’s ability to enforce data governance policies, such as restricting certain data types from being stored in publicly accessible storage.
+	•	Created policies based on compliance requirements (e.g., GDPR, HIPAA, CCPA).
+	•	Checked compliance dashboard:
+	•	Reviewed Cyera’s compliance dashboard to verify reports on the compliance status of the AWS environment.
+	•	Generated compliance reports to assess Cyera’s ability to meet organizational regulatory requirements.
+
+8. Generated Reporting and Data Insights:
+
+	•	Created detailed reports:
+	•	Used Cyera’s reporting tools to generate detailed reports on sensitive data discovered, risks identified, and remediations performed.
+	•	Customized these reports based on data sensitivity, access permissions, and security posture.
+	•	Shared findings with stakeholders:
+	•	Presented the findings to security, compliance, and data governance teams to review the effectiveness of Cyera’s scanning and remediation.
+
+9. Reviewed Performance and Scalability:
+
+	•	Assessed scan efficiency:
+	•	Evaluated the speed and efficiency of Cyera’s scans on the AWS environment to ensure it covered large datasets, varying file types, and complex configurations.
+	•	Tested multi-account setup:
+	•	Tested how Cyera scaled across multiple AWS accounts and how well it aggregated and prioritized risks across all accounts.
+
+10. Finalized PoC and Next Steps:
+
+	•	Compiled PoC results:
+	•	Summarized the key findings of the PoC, including the discovery of sensitive data, risk identification, and remediation actions.
+	•	Evaluated against objectives:
+	•	Reviewed how well Cyera met the initial objectives, such as improving visibility, detecting risks, or maintaining compliance.
+	•	Provided feedback:
+	•	Provided feedback to Cyera regarding any areas for improvement.
+	•	Decided on full deployment:
+	•	Based on the performance of the PoC, decided whether to proceed with full deployment of Cyera DSPM across AWS accounts.
