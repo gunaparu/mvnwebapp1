@@ -1,3 +1,34 @@
+Here is the corrected version:
+
+DSPM PoC Report
+
+Introduction:
+Data Security Posture Management (DSPM) is a technology used to help our organization protect sensitive data. It continuously monitors data environments to detect anomalous behavior and security risks. FSD onboarded the following three accounts to validate the product’s capabilities and test the use cases provided by GSO:
+
+	•	EXPN-NA-CIS-ADS-NenPred (148831404783)
+	•	EXPN-NA-CIS-Ascend-Experience-NenPred (887439093500)
+	•	EXPN-NA-CIS-AcceleratorARRs-NenPred (529330437651)
+
+The list of use cases tested and the scoring matrix are included in the report.
+
+Products selected for DSPM PoC:
+
+	•	Wiz
+	•	Cyera
+
+Findings:
+
+Wiz:
+
+	•	Wiz provides a single-pane dashboard that displays findings and issues that have been identified. These issues are categorized based on severity, ranging from critical to high, medium, and low. This categorization helps prioritize findings based on the type and nature of the data.
+	•	Wiz can classify data by recognizing data types such as Digital Identity, Financial, Data Lineage, PHI, PII, and other sensitive information.
+	•	Wiz allows for the creation of custom rules to detect findings or issues. These rules can be used to monitor activity and send alerts when triggered.
+	•	Wiz has the capability to auto-remediate issues using custom rules.
+	•	Wiz integrates with all enterprise tools, enhancing its compatibility across different environments.
+	•	Wiz provides graphical visualizations and allows for drill-downs to obtain precise information on each finding or issue (see Fig 1).
+
+
+
 Here’s the corrected version:
 
 Challenges:
