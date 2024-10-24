@@ -1,0 +1,15 @@
+Here’s the corrected version:
+
+Challenges:
+
+Wiz:
+
+	•	The team has observed that some critical or sensitive findings identified by Cyera are also reported in Wiz, but certain findings captured by Cyera are not detected by Wiz.
+	•	KMS keys need to be provided as part of Wiz’s data scanning process, whereas in Cyera, this setup is not required.
+	•	Wiz uses random sampling to scan and report data, which may lead to missing some critical findings and issues.
+
+Cyera:
+
+	•	Auto-remediation is possible with Cyera, but it still requires integration with another application (e.g., Tines) to function effectively.
+	•	Real-time alerting is not available in Cyera. If real-time alerts are needed, integration with tools like Splunk is required.
+	•	Graphical visualization of the reported issues is lacking in Cyera.
