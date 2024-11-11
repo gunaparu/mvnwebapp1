@@ -1,0 +1,27 @@
+import csv
+from collections import defaultdict
+
+def create_role_list(file_path):
+    # Initialize a dictionary to store roles for each account
+    account_roles = defaultdict(list)
+
+    # Open and read the CSV file
+    with open(file_path, mode='r') as file:
+        csv_reader = csv.DictReader(file)
+        
+        # Process each row
+        for row in csv_reader:
+            account = row['Account']
+            role = row['Role']
+            account_roles[account].append(role)
+    
+    # Convert defaultdict to regular dictionary for output
+    return dict(account_roles)
+
+# Usage
+file_path = 'accounts_roles.csv'  # Replace with the path to your CSV file
+account_roles = create_role_list(file_path)
+
+# Display the result
+for account, roles in account_roles.items():
+    print(f"Account: {account}, Roles: {roles}")
