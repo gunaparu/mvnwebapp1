@@ -1,0 +1,27 @@
+Here’s a draft email you can use to notify the platform team and SRE team about the removal of the unused roles and the broadcast email:
+
+Subject: Action Required: Removal of Unused SRE-Admin-Roles in CIS AWS Accounts
+
+Dear Platform and SRE Teams,
+
+As part of the ongoing CIS AWS IAM Roles Rationalization effort, we are working to clean up unused and misaligned roles in AWS accounts. Our recent analysis identified the following key points regarding the SRE-Admin-Role across CIS AWS accounts:
+	1.	The SRE-Admin-Role exists in 105 out of 110 accounts.
+	2.	36 of these roles have been unused since their creation.
+
+To ensure better IAM hygiene and compliance, we will be proceeding with the removal of these 36 unused roles from their respective accounts. The removal process will be completed by December 30, 2024.
+
+Additionally, we will send out a broadcast email to all product development teams informing them about the SRE-Admin-Role cleanup. This communication will ensure that any stakeholders are aware of the upcoming changes and can take appropriate action if necessary.
+
+Next Steps for Platform and SRE Teams:
+	1.	Review the Unused Roles: If there are specific roles among the unused ones that need to be retained for any reason, please notify us by [specific date, e.g., December 15, 2024].
+	2.	Support the Transition: Ensure product teams under your purview are informed about transitioning to alternative roles aligned with their requirements.
+
+If you have any concerns or require further details, feel free to reach out to the CIS DevSecOps Team at CIS-DevSecOps@experian.com or PE-SRE@experian.com.
+
+Thank you for your cooperation in maintaining secure and efficient access management practices.
+
+Best regards,
+[Your Name]
+CIS DevSecOps Team
+
+Would you like to refine any part of the email further?
