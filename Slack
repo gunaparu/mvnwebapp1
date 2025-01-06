@@ -36,28 +36,3 @@ if __name__ == "__main__":
         send_table_to_slack(table_text, slack_bot_token, slack_channel)
     else:
         print("CSV file not found.")
-
-
-
-
-
-
-
-
-
-
-
-Here’s the corrected version of your email:
-
-Subject: Review of S3 Bucket Access Request
-
-Hi Sai,
-
-I’ve reviewed this request. The S3 buckets mentioned below do not contain any PII or sensitive data. However, since these buckets will be accessed by a user, I discussed the matter with the team and suggested migrating to an IAM Role in accordance with our security guidelines.
-
-Therefore, this request can be approved for an interim period.
-
-Regards,
-T. Gunasekhar
-
-Let me know if you’d like further adjustments!
