@@ -72,3 +72,116 @@ resource "aws_secretsmanager_secret_version" "pgp_secret_key_version" {
 }
 
 
+
+
+
+
+# Variable for App Name
+variable "app_name" {
+  default = "PCOE_Batch_UAT" # Replace with your application name
+}
+
+# Variable for IAM Role ARN
+variable "role_arn" {
+  default = "arn:aws:iam::123456789012:role/your-role-name" # Replace with your IAM Role ARN
+}
+
+# Public Key Secret
+resource "aws_secretsmanager_secret" "pgp_public_key" {
+  name        = "ESS_${var.app_name}_PGP_PUBLIC_KEY"
+  description = "PGP Public Key for ${var.app_name}"
+}
+
+resource "aws_secretsmanager_secret_version" "pgp_public_key_version" {
+  secret_id     = aws_secretsmanager_secret.pgp_public_key.id
+  secret_string = "DUMMY_PUBLIC_KEY"
+}
+
+resource "aws_secretsmanager_secret_policy" "pgp_public_key_policy" {
+  secret_arn = aws_secretsmanager_secret.pgp_public_key.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowAccessToSpecificRole"
+        Effect    = "Allow"
+        Principal = {
+          AWS = var.role_arn
+        }
+        Action    = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource  = aws_secretsmanager_secret.pgp_public_key.arn
+      }
+    ]
+  })
+}
+
+# Private Key Secret
+resource "aws_secretsmanager_secret" "pgp_private_key" {
+  name        = "ESS_${var.app_name}_PGP_PRIVATE_KEY"
+  description = "PGP Private Key for ${var.app_name}"
+}
+
+resource "aws_secretsmanager_secret_version" "pgp_private_key_version" {
+  secret_id     = aws_secretsmanager_secret.pgp_private_key.id
+  secret_string = "DUMMY_PRIVATE_KEY"
+}
+
+resource "aws_secretsmanager_secret_policy" "pgp_private_key_policy" {
+  secret_arn = aws_secretsmanager_secret.pgp_private_key.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowAccessToSpecificRole"
+        Effect    = "Allow"
+        Principal = {
+          AWS = var.role_arn
+        }
+        Action    = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource  = aws_secretsmanager_secret.pgp_private_key.arn
+      }
+    ]
+  })
+}
+
+# Secret Key Secret
+resource "aws_secretsmanager_secret" "pgp_secret_key" {
+  name        = "ESS_${var.app_name}_PGP_SECRET_KEY"
+  description = "PGP Secret Key for ${var.app_name}"
+}
+
+resource "aws_secretsmanager_secret_version" "pgp_secret_key_version" {
+  secret_id     = aws_secretsmanager_secret.pgp_secret_key.id
+  secret_string = "DUMMY_SECRET_KEY"
+}
+
+resource "aws_secretsmanager_secret_policy" "pgp_secret_key_policy" {
+  secret_arn = aws_secretsmanager_secret.pgp_secret_key.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowAccessToSpecificRole"
+        Effect    = "Allow"
+        Principal = {
+          AWS = var.role_arn
+        }
+        Action    = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource  = aws_secretsmanager_secret.pgp_secret_key.arn
+      }
+    ]
+  })
+}
+
