@@ -1,0 +1,65 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ssm:*",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestTag/Platform": "*",
+          "aws:RequestTag/Security": "*"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ecs:*",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kafka:*",
+        "datasync:start*",
+        "datasync:stop*",
+        "datasync:list*",
+        "datasync:describe*",
+        "glue:list*",
+        "glue:get*",
+        "glue:describe*",
+        "glue:start*",
+        "glue:stop*",
+        "batch:submitJob",
+        "batch:terminateJobs",
+        "states:start*",
+        "states:stop*",
+        "elasticache:modify*",
+        "elasticache:increaseReplicaCount",
+        "elasticache:decreaseReplicaCount",
+        "elasticache:ModifyReplicationGroupShardConfiguration",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "athena:RunQuery",
+        "athena:StartQueryExecution",
+        "acm:Describe*",
+        "acm:List*",
+        "acm:Get*",
+        "cloudwatch:PutDashboard"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Deny",
+      "Action": [
+        "ecs:start*",
+        "ecs:stop*",
+        "ecs:run*",
+        "ecs:ExecuteCommand",
+        "kafka:delete*",
+        "kafka:create*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
