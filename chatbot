@@ -141,3 +141,20 @@ def main():
 
 if __name__ == "__main__":
     main()
+def get_scp_targets(policy_id):
+    """Get the list of targets (OUs or accounts) where the SCP is applied."""
+    targets = []
+    response = org_client.list_targets_for_policy(PolicyId=policy_id)
+    targets.extend(response['Targets'])
+
+    while 'NextToken' in response:
+        response = org_client.list_targets_for_policy(PolicyId=policy_id, NextToken=response['NextToken'])
+        targets.extend(response['Targets'])
+
+    target_info = []
+    for target in targets:
+        target_type = target['Type']  # 'ORGANIZATIONAL_UNIT' or 'ACCOUNT'
+        target_name = target['Name']
+        target_info.append(f"{target_name} ({target_type})")
+    
+    return target_info
