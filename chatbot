@@ -1,1 +1,154 @@
+import boto3
+import json
+import csv
+import re
+from deepdiff import DeepDiff
 
+org_client = boto3.client('organizations')
+
+
+def list_scps():
+    """List all SCPs in the organization."""
+    scps = []
+    response = org_client.list_policies(Filter='SERVICE_CONTROL_POLICY')
+    scps.extend(response['Policies'])
+
+    while 'NextToken' in response:
+        response = org_client.list_policies(Filter='SERVICE_CONTROL_POLICY', NextToken=response['NextToken'])
+        scps.extend(response['Policies'])
+
+    return scps
+
+
+def get_scp_content(policy_id):
+    """Get the policy document for a given SCP."""
+    response = org_client.get_policy(PolicyId=policy_id)
+    policy_doc = response['Policy']['Content']
+    return json.loads(policy_doc)
+
+
+def extract_permissions(policy_doc):
+    """Extract all allowed or denied actions from a policy document."""
+    permissions = set()
+    if "Statement" not in policy_doc:
+        return permissions
+
+    for statement in policy_doc["Statement"]:
+        if "Action" in statement:
+            actions = statement["Action"]
+            if isinstance(actions, list):
+                permissions.update(actions)
+            else:
+                permissions.add(actions)
+
+    return normalize_permissions(permissions)
+
+
+def normalize_permissions(permissions):
+    """Normalize permissions by handling wildcards."""
+    normalized_perms = set()
+    for action in permissions:
+        if "*" in action:
+            service = action.split(":")[0]
+            if action.endswith(":*"):
+                # Assume all actions for a service if wildcard is present
+                normalized_perms.add(f"{service}:ALL_ACTIONS")
+            else:
+                normalized_perms.add(action)  # Keep generic patterns like `s3:Get*`
+        else:
+            normalized_perms.add(action)
+    return normalized_perms
+
+
+def compare_permissions(policy_1_name, policy_1_perms, policy_2_name, policy_2_perms):
+    """Compare permissions between two SCPs and detect overlaps."""
+    overlap = set()
+    for action1 in policy_1_perms:
+        for action2 in policy_2_perms:
+            if is_redundant(action1, action2):
+                overlap.add(action1)
+    return overlap
+
+
+def is_redundant(action1, action2):
+    """Check if one action is redundant due to wildcards."""
+    # Exact match
+    if action1 == action2:
+        return True
+
+    # Handle wildcards like s3:Get* vs s3:GetObject
+    if re.match(action1.replace("*", ".*"), action2):
+        return True
+    if re.match(action2.replace("*", ".*"), action1):
+        return True
+
+    # Handle service-level wildcards like s3:* vs specific actions
+    if action1.endswith(":ALL_ACTIONS") or action2.endswith(":ALL_ACTIONS"):
+        return action1.split(":")[0] == action2.split(":")[0]
+
+    return False
+
+
+def compare_policies(policy_1_content, policy_2_content):
+    """Compare two policy documents and return detailed differences."""
+    return DeepDiff(policy_1_content, policy_2_content, ignore_order=True).to_dict()
+
+
+def generate_csv(data):
+    """Generate a CSV report for SCP permission and policy comparisons."""
+    filename = "scp_redundancy_detailed_report.csv"
+    
+    with open(filename, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        # Write headers
+        writer.writerow(["SCP 1 Name", "SCP 2 Name", "Redundant Permissions", "Are Policies Identical?", "Policy Differences"])
+        
+        # Write data
+        for row in data:
+            writer.writerow(row)
+    
+    print(f"CSV file '{filename}' generated successfully.")
+
+
+def main():
+    scp_data = []
+    scps = list_scps()
+
+    print("Comparing SCP permissions and policy documents for redundancy...")
+
+    # Fetch all policies and their permissions
+    scp_details = {}
+    for scp in scps:
+        policy_name = scp['Name']
+        policy_id = scp['Id']
+        policy_content = get_scp_content(policy_id)
+        permissions = extract_permissions(policy_content)
+        scp_details[policy_name] = {"id": policy_id, "content": policy_content, "permissions": permissions}
+
+    # Compare permissions and policies between SCPs
+    for scp_1_name, scp_1_data in scp_details.items():
+        for scp_2_name, scp_2_data in scp_details.items():
+            if scp_1_name != scp_2_name:
+                # Compare permissions
+                redundant_perms = compare_permissions(
+                    scp_1_name, scp_1_data["permissions"], scp_2_name, scp_2_data["permissions"]
+                )
+                
+                # Compare policy documents
+                policy_differences = compare_policies(scp_1_data["content"], scp_2_data["content"])
+                are_policies_identical = "Yes" if not policy_differences else "No"
+
+                scp_data.append([
+                    scp_1_name, 
+                    scp_2_name, 
+                    ", ".join(redundant_perms) if redundant_perms else "None", 
+                    are_policies_identical, 
+                    json.dumps(policy_differences) if policy_differences else "None"
+                ])
+
+    # Generate the CSV report
+    generate_csv(scp_data)
+
+
+if __name__ == "__main__":
+    main()
