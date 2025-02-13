@@ -1,18 +1,92 @@
-Subject: Request for Disaster Recovery (DR) Plan for Your Application
+provider "aws" {
+  region = "us-east-1"
+}
 
-Dear [Product Owner’s Name],
+# ---- KMS KEYS ----
 
-I hope you are doing well.
+# Create PROD KMS Key
+resource "aws_kms_key" "prod_key" {
+  description         = "KMS key for PROD S3 bucket"
+  enable_key_rotation = true
+}
 
-As part of our disaster recovery (DR) preparedness efforts, we are gathering the DR plans for applications across our AWS accounts. We need to collect the DR plan for your application, [Application Name], and pass it to the Fusion team for documentation.
+resource "aws_kms_alias" "prod_alias" {
+  name          = "alias/prod-s3-kms-key"
+  target_key_id = aws_kms_key.prod_key.key_id
+}
 
-If you already have a DR plan in place, please share the latest version with me at your earliest convenience. If a DR plan has not been created yet, I kindly request you to initiate the process and provide the necessary details.
+# Create DEV KMS Key
+resource "aws_kms_key" "dev_key" {
+  description         = "KMS key for DEV S3 bucket"
+  enable_key_rotation = true
+}
 
-Please confirm the status of your application’s DR plan by [deadline, if applicable]. Let me know if you need any guidance or assistance.
+resource "aws_kms_alias" "dev_alias" {
+  name          = "alias/dev-s3-kms-key"
+  target_key_id = aws_kms_key.dev_key.key_id
+}
 
-Looking forward to your response.
 
-Best regards,
-[Your Name]
-[Your Designation]
-[Your Contact Information]
+# ---- KMS POLICIES ----
+
+# PROD KMS Key Policy
+resource "aws_kms_key_policy" "prod_policy" {
+  key_id = aws_kms_key.prod_key.id
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "prod-kms-policy",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::354395088643:role/eec-aws-standard-emr-defaultrole",
+          "arn:aws:iam::354395088643:role/BURoleForEMREC2DefaultRole"
+        ]
+      },
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+POLICY
+}
+
+# DEV KMS Key Policy
+resource "aws_kms_key_policy" "dev_policy" {
+  key_id = aws_kms_key.dev_key.id
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "dev-kms-policy",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::354395088643:role/eec-aws-standard-emr-defaultrole",
+          "arn:aws:iam::354395088643:role/BURoleForEMREC2DefaultRole"
+        ]
+      },
+      "Action": [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+POLICY
+}
+
+
