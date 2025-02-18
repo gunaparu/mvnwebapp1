@@ -109,4 +109,99 @@ AWS Lambda	Handles Slack messages and queries Lex
 Amazon API Gateway	Exposes an endpoint for Slack integration
 Slack API	Sends/receives messages from Slack
 
-This setup enables a fully functional Slack chatbot using AWS services. Let me know if you need enhancements!
+This setup enables a fully functional Slack chatbot using AWS services. Let me know if you need 
+
+Yes, you can store the knowledge base in a TXT file in S3 and use it for the chatbot. However, searching text data in a TXT file is less structured than JSON, but it can still work using keyword matching or semantic search (using AI models like Amazon Bedrock or OpenAI API).
+
+Steps to Use a TXT File as Knowledge Base
+
+Step 1: Upload a TXT File to S3
+	1.	Open Amazon S3 in AWS Console.
+	2.	Create a bucket (e.g., chatbot-knowledge-base).
+	3.	Upload a TXT file with knowledge base data.
+
+Example knowledge_base.txt
+
+IAM roles: IAM roles grant temporary permissions to AWS resources.
+Disaster recovery: Disaster recovery in AWS involves backups, failover strategies, and resilience planning.
+Security best practices: Use IAM least privilege, encrypt data, and enable logging.
+
+Step 2: Create AWS Lambda Function
+
+This function will read the TXT file from S3 and search for relevant answers.
+
+Lambda Function (Python)
+
+import boto3
+
+S3_BUCKET = "chatbot-knowledge-base"
+S3_FILE = "knowledge_base.txt"
+s3_client = boto3.client("s3")
+
+def get_data_from_s3():
+    response = s3_client.get_object(Bucket=S3_BUCKET, Key=S3_FILE)
+    content = response["Body"].read().decode("utf-8")
+    return content
+
+def search_answer(user_query, knowledge_text):
+    lines = knowledge_text.split("\n")
+    for line in lines:
+        if ":" in line:
+            key, value = line.split(":", 1)
+            if key.lower() in user_query.lower():
+                return value.strip()
+    return "I couldn't find an answer. Please check the knowledge base."
+
+def lambda_handler(event, context):
+    user_query = event["inputTranscript"]  # Extract user query from Lex
+    knowledge_text = get_data_from_s3()
+    answer = search_answer(user_query, knowledge_text)
+    
+    return {
+        "sessionState": {
+            "dialogAction": {"type": "Close"},
+            "intent": {"name": "GetKnowledge", "state": "Fulfilled"}
+        },
+        "messages": [{"contentType": "PlainText", "content": answer}]
+    }
+
+	•	This function:
+	1.	Reads the TXT file from S3.
+	2.	Splits the file line by line.
+	3.	Searches for a keyword match in user queries.
+	4.	Returns the corresponding answer.
+
+Step 3: Create Amazon Lex Chatbot
+
+Follow the same process as before:
+	1.	Create a Lex bot (KnowledgeBot).
+	2.	Add an Intent (GetKnowledge).
+	3.	Define Sample Utterances like:
+
+"What is IAM?"
+"Tell me about disaster recovery."
+"What are security best practices?"
+
+
+	4.	Set Lambda function as the fulfillment method.
+	5.	Deploy and test the chatbot.
+
+Pros & Cons of Using TXT Instead of JSON
+
+Factor	TXT Format	JSON Format
+Simplicity	Easy to write and read	Structured but requires formatting
+Search Performance	Basic keyword matching	Faster structured search
+Flexibility	Good for plain text data	Better for hierarchical data
+Scalability	Difficult for large data	Easier to scale
+
+Alternative: Using AI for Smarter Search
+
+If you want smarter search, you can:
+	•	Use Amazon Bedrock (Claude, Titan) for AI-driven response generation.
+	•	Use Amazon OpenSearch (or DynamoDB) for structured search.
+	•	Integrate with OpenAI GPT API for natural language processing.
+
+For now, if a simple keyword-based chatbot is enough, the TXT approach will work. Let me know if you want to improve the search!
+
+
+
