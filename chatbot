@@ -1,3 +1,9 @@
+aws lexv2-models update-bot --bot-id <Your-Bot-ID> \
+--role-arn arn:aws:iam::<your-account-id>:role/LexBotRole \
+--fulfillment-code-hook-lambda arn:aws:lambda:<your-region>:<your-account-id>:function:LexKnowledgeHandler
+
+
+
 Yes! You can integrate your chatbot with Slack using Amazon Lex and AWS Lambda. Here’s how:
 
 High-Level Flow
