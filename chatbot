@@ -210,4 +210,17 @@ If you want smarter search, you can:
 For now, if a simple keyword-based chatbot is enough, the TXT approach will work. Let me know if you want to improve the search!
 
 
+Subject: RE: Normal Change CHG2549544 - Review and Approval Request
+
+Hi Nitin, Ramprasad,
+
+We have included both UAT and PROD in a single change request because we consider UAT to be similar to PROD in this context. A similar change has already been tested in both staging and development environments, ensuring stability and correctness.
+
+Additionally, the IAM roles mentioned in this change are unused roles, so there will be no impact from this change on any active processes.
+
+Please let us know if further clarification is needed.
+
+Best regards,
+T. Gunasekhar
+
 
