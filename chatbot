@@ -585,3 +585,25 @@ def analyze_scp_issues():
 
 if __name__ == "__main__":
     analyze_scp_issues()
+
+Hi Sai,
+
+I appreciate your follow-up.
+
+1. IMDSv1 Migration Status:
+	•	We are actively working with the Product Development (PD) teams to migrate workloads from IMDSv1 to IMDSv2 across all accounts.
+	•	The transition plan includes:
+	•	Identifying workloads still using IMDSv1.
+	•	Coordinating with respective teams for phased migration.
+	•	Enforcing IMDSv2 for new instance launches.
+	•	The progress is being tracked, and we are ensuring minimal impact during this migration.
+
+2. CSPM Metrics & SLA Tracking:
+	•	The latest CSPM (Cloud Security Posture Management) metrics indicate 18 cloud misconfigurations, with 4 SLA breaches that require immediate attention.
+	•	Below is the summary of missed SLA issues:
+We are working closely with the respective owning teams to remediate these misconfigurations and bring them within SLA limits.
+
+Please let me know if you need any additional details.
+
+Best regards,
+
