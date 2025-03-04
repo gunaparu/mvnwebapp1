@@ -211,3 +211,94 @@ For now, if a simple keyword-based chatbot is enough, the TXT approach will work
 
 
 
+import boto3
+import json
+
+# Initialize AWS Organizations client
+client = boto3.client('organizations')
+
+def list_scp_policies():
+    """Retrieve all SCPs in the AWS Organization"""
+    policies = []
+    paginator = client.get_paginator('list_policies')
+    for page in paginator.paginate(Filter='SERVICE_CONTROL_POLICY'):
+        policies.extend(page['Policies'])
+    return policies
+
+def describe_scp(policy_id):
+    """Fetch SCP details"""
+    response = client.describe_policy(PolicyId=policy_id)
+    return response['Policy']
+
+def list_scp_targets(policy_id):
+    """List OUs and Accounts where the SCP is applied"""
+    targets = []
+    paginator = client.get_paginator('list_targets_for_policy')
+    for page in paginator.paginate(PolicyId=policy_id):
+        targets.extend(page['Targets'])
+    return targets
+
+def list_accounts():
+    """List all AWS accounts in the organization"""
+    accounts = []
+    paginator = client.get_paginator('list_accounts')
+    for page in paginator.paginate():
+        accounts.extend(page['Accounts'])
+    return accounts
+
+def analyze_scp_issues():
+    """Perform SCP analysis"""
+    scp_policies = list_scp_policies()
+    accounts = list_accounts()
+    account_ids = {acc['Id'] for acc in accounts}
+
+    print(f"🔍 Found {len(scp_policies)} SCPs in the AWS Organization...\n")
+
+    for scp in scp_policies:
+        policy_id = scp['Id']
+        policy_name = scp['Name']
+        policy_details = describe_scp(policy_id)
+        policy_json = json.loads(policy_details['Content'])
+        policy_statements = policy_json.get("Statement", [])
+
+        print(f"➡️ Analyzing SCP: {policy_name} ({policy_id})")
+
+        # Check if SCP is applied to any account or OU
+        targets = list_scp_targets(policy_id)
+        if not targets:
+            print(f"⚠️ Warning: SCP '{policy_name}' is **not attached** to any account or OU!\n")
+
+        # Check if SCP is applied to an empty OU
+        for target in targets:
+            if target['Type'] == 'ORGANIZATIONAL_UNIT':
+                ou_id = target['TargetId']
+                children = client.list_children(ParentId=ou_id, ChildType='ACCOUNT')['Children']
+                if not children:
+                    print(f"⚠️ Warning: SCP '{policy_name}' is attached to an **empty OU ({ou_id})**!\n")
+
+        # Check for overly permissive policies
+        for statement in policy_statements:
+            if statement['Effect'] == "Allow":
+                print(f"⚠️ Risk: SCP '{policy_name}' has an **Allow rule**, which may be unsafe.\n")
+
+            if "*" in statement.get("Resource", ""):
+                print(f"⚠️ Risk: SCP '{policy_name}' allows **all resources (`*`)**!\n")
+
+            if "*" in statement.get("Action", ""):
+                print(f"⚠️ Risk: SCP '{policy_name}' allows **all actions (`*`)**!\n")
+
+        # Check for redundant denies
+        deny_actions = set()
+        for statement in policy_statements:
+            if statement['Effect'] == "Deny":
+                for action in statement.get("Action", []):
+                    if action in deny_actions:
+                        print(f"⚠️ Redundancy: SCP '{policy_name}' has duplicate deny rule for action: {action}\n")
+                    deny_actions.add(action)
+
+        print("✅ SCP Analysis Completed.\n")
+
+if __name__ == "__main__":
+    analyze_scp_issues()
+
+
