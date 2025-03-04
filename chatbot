@@ -302,3 +302,131 @@ if __name__ == "__main__":
     analyze_scp_issues()
 
 
+import boto3
+import json
+
+# Initialize AWS Organizations client
+client = boto3.client('organizations')
+
+def list_scp_policies():
+    """Retrieve all SCPs in the AWS Organization"""
+    policies = []
+    paginator = client.get_paginator('list_policies')
+    for page in paginator.paginate(Filter='SERVICE_CONTROL_POLICY'):
+        policies.extend(page['Policies'])
+    return policies
+
+def describe_scp(policy_id):
+    """Fetch SCP details"""
+    response = client.describe_policy(PolicyId=policy_id)
+    return response['Policy']
+
+def list_scp_targets(policy_id):
+    """List OUs and Accounts where the SCP is applied"""
+    targets = []
+    paginator = client.get_paginator('list_targets_for_policy')
+    for page in paginator.paginate(PolicyId=policy_id):
+        targets.extend(page['Targets'])
+    return targets
+
+def list_accounts():
+    """List all AWS accounts in the organization"""
+    accounts = []
+    paginator = client.get_paginator('list_accounts')
+    for page in paginator.paginate():
+        accounts.extend(page['Accounts'])
+    return accounts
+
+def list_ous():
+    """List all Organizational Units (OUs) in the AWS Organization"""
+    ous = []
+    paginator = client.get_paginator('list_organizational_units_for_parent')
+    root_id = client.list_roots()['Roots'][0]['Id']
+    for page in paginator.paginate(ParentId=root_id):
+        ous.extend(page['OrganizationalUnits'])
+    return ous
+
+def list_children(ou_id):
+    """List all accounts under a given OU"""
+    children = []
+    paginator = client.get_paginator('list_children')
+    for page in paginator.paginate(ParentId=ou_id, ChildType='ACCOUNT'):
+        children.extend(page['Children'])
+    return children
+
+def analyze_scp_issues():
+    """Perform SCP analysis"""
+    scp_policies = list_scp_policies()
+    accounts = list_accounts()
+    ous = list_ous()
+    
+    account_ids = {acc['Id']: acc['Name'] for acc in accounts}
+    ou_ids = {ou['Id']: ou['Name'] for ou in ous}
+
+    print(f"🔍 Found {len(scp_policies)} SCPs in the AWS Organization...\n")
+
+    # Track SCP attachments
+    scp_account_map = {acc_id: [] for acc_id in account_ids}
+    scp_ou_map = {ou_id: [] for ou_id in ou_ids}
+
+    for scp in scp_policies:
+        policy_id = scp['Id']
+        policy_name = scp['Name']
+        policy_details = describe_scp(policy_id)
+        policy_json = json.loads(policy_details['Content'])
+        policy_statements = policy_json.get("Statement", [])
+
+        print(f"➡️ Analyzing SCP: {policy_name} ({policy_id})")
+
+        # Get SCP targets
+        targets = list_scp_targets(policy_id)
+        if not targets:
+            print(f"⚠️ Warning: SCP '{policy_name}' is **not attached** to any account or OU!\n")
+
+        for target in targets:
+            if target['Type'] == 'ACCOUNT':
+                scp_account_map[target['TargetId']].append(policy_name)
+            elif target['Type'] == 'ORGANIZATIONAL_UNIT':
+                scp_ou_map[target['TargetId']].append(policy_name)
+        
+        # Check for overly permissive SCPs
+        for statement in policy_statements:
+            if statement['Effect'] == "Allow":
+                print(f"⚠️ Risk: SCP '{policy_name}' has an **Allow rule**, which may be unsafe.\n")
+            if "*" in statement.get("Resource", ""):
+                print(f"⚠️ Risk: SCP '{policy_name}' allows **all resources (`*`)**!\n")
+            if "*" in statement.get("Action", ""):
+                print(f"⚠️ Risk: SCP '{policy_name}' allows **all actions (`*`)**!\n")
+
+        # Check for redundant denies
+        deny_actions = set()
+        for statement in policy_statements:
+            if statement['Effect'] == "Deny":
+                for action in statement.get("Action", []):
+                    if action in deny_actions:
+                        print(f"⚠️ Redundancy: SCP '{policy_name}' has duplicate deny rule for action: {action}\n")
+                    deny_actions.add(action)
+
+        print("✅ SCP Analysis Completed.\n")
+
+    # Identify accounts missing SCPs at the OU level
+    print("\n🔍 Checking accounts with SCPs but not at the OU level...\n")
+    for account_id, scp_list in scp_account_map.items():
+        if scp_list:
+            # Find if the account is inside an OU with SCPs
+            for ou_id in ou_ids:
+                if account_id in [child['Id'] for child in list_children(ou_id)]:
+                    if not scp_ou_map[ou_id]:  # If OU has no SCP
+                        print(f"⚠️ Account {account_ids[account_id]} ({account_id}) has SCPs attached but **its OU ({ou_ids[ou_id]}) has none**.\n")
+                        break
+            else:
+                print(f"⚠️ Account {account_ids[account_id]} ({account_id}) has SCPs but is **not inside an OU with SCP enforcement**.\n")
+
+    # Identify OUs without SCPs
+    print("\n🔍 Checking OUs without SCPs...\n")
+    for ou_id, ou_name in ou_ids.items():
+        if not scp_ou_map[ou_id]:
+            print(f"⚠️ OU '{ou_name}' ({ou_id}) has **no SCPs attached**, which may be a security risk!\n")
+
+if __name__ == "__main__":
+    analyze_scp_issues()
