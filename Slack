@@ -14,3 +14,27 @@ aws cloudtrail put-event-selectors \
             }
         ]
     }]'
+import boto3
+import json
+import gzip
+
+s3 = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+
+def lambda_handler(event, context):
+    bucket_name = event['Records'][0]['s3']['bucket']['name']
+    object_key = event['Records'][0]['s3']['object']['key']
+    
+    response = s3.get_object(Bucket=bucket_name, Key=object_key)
+    log_data = gzip.decompress(response['Body'].read()).decode('utf-8')
+    cloudtrail_events = json.loads(log_data)["Records"]
+    
+    iam_events = [
+        event for event in cloudtrail_events if "iam.amazonaws.com" in event["eventSource"]
+    ]
+    
+    for log in iam_events:
+        table.put_item(Item=log)
+    
+    return {"status": "IAM logs stored in DynamoDB"}
