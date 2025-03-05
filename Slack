@@ -59,3 +59,44 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error processing event: {e}")
         return {"status": "Error processing event", "error": str(e)}
+
+import boto3
+import json
+
+# AWS Clients
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+bedrock = boto3.client("bedrock-runtime")  # AWS Bedrock Runtime API
+
+# Define Suspicious Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser"
+]
+
+# Lambda Function
+def lambda_handler(event, context):
+    response = table.scan(Limit=10)  # Get recent 10 logs
+    logs = response["Items"]
+
+    findings = []
+    
+    for log in logs:
+        if log["eventName"] in SUSPICIOUS_ACTIONS:
+            prompt = f"Analyze this IAM event for security risks:\n{json.dumps(log, indent=2)}"
+            
+            # Call AWS Bedrock (Replace model with actual Bedrock-supported model)
+            bedrock_response = bedrock.invoke_model(
+                modelId="anthropic.claude-v2",
+                body=json.dumps({"prompt": prompt, "max_tokens_to_sample": 200})
+            )
+            
+            result = json.loads(bedrock_response["body"].read().decode("utf-8"))
+            risk_assessment = result.get("completion", "No analysis available")
+
+            findings.append({
+                "event": log["eventName"],
+                "user": log["userIdentity"]["arn"],
+                "risk_assessment": risk_assessment
+            })
+    
+    return {"status": "Analysis Complete", "findings": findings}
