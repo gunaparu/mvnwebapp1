@@ -188,3 +188,49 @@ SUSPICIOUS_ACTIONS = [
     "StopLogging", "DeleteTrail", "UpdateTrail",
     "PutEventSelectors", "PutInsightSelectors"
 ]
+
+import boto3
+import json
+
+# AWS Clients
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+bedrock = boto3.client("bedrock-runtime")  # AWS Bedrock Runtime API
+
+# Define Suspicious Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser",
+    "AssumeRole", "UpdateAssumeRolePolicy", "StopLogging"
+]
+
+# Lambda Function
+def lambda_handler(event, context):
+    response = table.scan(Limit=10)  # Get recent 10 logs
+    logs = response["Items"]
+
+    findings = []
+    
+    for log in logs:
+        if log["eventName"] in SUSPICIOUS_ACTIONS:
+            # ✅ Safely extract user ARN or fallback to "Unknown"
+            user_identity = log.get("userIdentity", {})
+            user_arn = user_identity.get("arn", user_identity.get("principalId", "Unknown"))
+
+            prompt = f"Analyze this IAM event for security risks:\n{json.dumps(log, indent=2)}"
+            
+            # Call AWS Bedrock Titan Embedding
+            bedrock_response = bedrock.invoke_model(
+                modelId="amazon.titan-embed-text-v1",  
+                body=json.dumps({"prompt": prompt, "max_tokens_to_sample": 200})
+            )
+            
+            result = json.loads(bedrock_response["body"].read().decode("utf-8"))
+            risk_assessment = result.get("completion", "No analysis available")
+
+            findings.append({
+                "event": log["eventName"],
+                "user": user_arn,
+                "risk_assessment": risk_assessment
+            })
+    
+    return {"status": "Analysis Complete", "findings": findings}
