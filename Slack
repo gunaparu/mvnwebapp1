@@ -2,35 +2,48 @@ import boto3
 import json
 import gzip
 
-# Hardcoded S3 bucket name
 S3_BUCKET_NAME = "your-cloudtrail-log-bucket"
 
 s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table("IAMThreatLogs")
+table_name = "IAMThreatLogs"
 
+# Function to check if the table exists
+def check_and_create_table():
+    existing_tables = dynamodb.meta.client.list_tables()["TableNames"]
+    if table_name not in existing_tables:
+        dynamodb.create_table(
+            TableName=table_name,
+            AttributeDefinitions=[{"AttributeName": "eventID", "AttributeType": "S"}],
+            KeySchema=[{"AttributeName": "eventID", "KeyType": "HASH"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
+        print(f"Table {table_name} created successfully!")
+
+# Lambda function
 def lambda_handler(event, context):
+    check_and_create_table()  # Ensure table exists before inserting logs
+
     print("Received event:", json.dumps(event, indent=4))
 
     try:
-        # Use the hardcoded S3 bucket name
+        # Extract S3 object key
         if "Records" in event and len(event["Records"]) > 0 and "s3" in event["Records"][0]:
             bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
             object_key = event["Records"][0]["s3"]["object"]["key"]
         else:
-            # If the event does not contain S3 details, use the hardcoded bucket name
             bucket_name = S3_BUCKET_NAME
-            object_key = "path/to/cloudtrail/log.json.gz"  # Provide a sample log file path
-        
+            object_key = "AWSLogs/123456789012/CloudTrail/us-east-1/2025/03/06/correct-log-file.json.gz"
+
+        print(f"Fetching file: {object_key} from bucket: {bucket_name}")
+
         response = s3.get_object(Bucket=bucket_name, Key=object_key)
         log_data = gzip.decompress(response["Body"].read()).decode("utf-8")
         cloudtrail_events = json.loads(log_data)["Records"]
 
-        iam_events = [
-            event for event in cloudtrail_events if "iam.amazonaws.com" in event["eventSource"]
-        ]
-
-        for log in iam_events:
+        table = dynamodb.Table(table_name)
+        for log in cloudtrail_events:
+            log["eventID"] = log.get("eventID", "unknown")  # Ensure primary key exists
             table.put_item(Item=log)
 
         return {"status": "IAM logs stored in DynamoDB"}
