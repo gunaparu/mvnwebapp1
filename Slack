@@ -234,3 +234,59 @@ def lambda_handler(event, context):
             })
     
     return {"status": "Analysis Complete", "findings": findings}
+
+
+import boto3
+import json
+
+# AWS Clients
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+bedrock = boto3.client("bedrock-runtime")  # AWS Bedrock Runtime API
+
+# Define Suspicious Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser",
+    "AssumeRole", "UpdateAssumeRolePolicy", "StopLogging"
+]
+
+# Lambda Function
+def lambda_handler(event, context):
+    response = table.scan(Limit=10)  # Get recent 10 logs
+    logs = response["Items"]
+
+    findings = []
+    
+    for log in logs:
+        if log["eventName"] in SUSPICIOUS_ACTIONS:
+            # ✅ Safely extract user ARN or fallback to "Unknown"
+            user_identity = log.get("userIdentity", {})
+            user_arn = user_identity.get("arn", user_identity.get("principalId", "Unknown"))
+
+            # ✅ Titan requires "inputText" instead of "prompt"
+            request_body = json.dumps({"inputText": json.dumps(log, indent=2)})
+
+            try:
+                # Call AWS Bedrock Titan Embedding
+                bedrock_response = bedrock.invoke_model(
+                    modelId="amazon.titan-embed-text-v1",  
+                    body=request_body
+                )
+                
+                result = json.loads(bedrock_response["body"].read().decode("utf-8"))
+                embeddings = result.get("embedding", [])  # Titan returns embeddings
+
+                findings.append({
+                    "event": log["eventName"],
+                    "user": user_arn,
+                    "embeddings": embeddings[:5]  # Show first 5 values for testing
+                })
+            
+            except Exception as e:
+                findings.append({
+                    "event": log["eventName"],
+                    "user": user_arn,
+                    "error": str(e)
+                })
+
+    return {"status": "Analysis Complete", "findings": findings}
