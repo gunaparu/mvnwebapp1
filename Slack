@@ -349,3 +349,77 @@ def lambda_handler(event, context):
                 })
 
     return {"status": "Analysis Complete", "findings": findings}
+
+import boto3
+import json
+import decimal
+
+# AWS Clients
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+bedrock = boto3.client("bedrock-runtime")  # AWS Bedrock Runtime API
+
+# Define Suspicious Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser",
+    "AssumeRole", "UpdateAssumeRolePolicy", "StopLogging", "PutRolePolicy", "DeleteRolePolicy"
+]
+
+# Function to convert DynamoDB Decimal to standard Python types
+def convert_decimals(obj):
+    if isinstance(obj, list):
+        return [convert_decimals(i) for i in obj]
+    elif isinstance(obj, dict):
+        return {k: convert_decimals(v) for k, v in obj.items()}
+    elif isinstance(obj, decimal.Decimal):  # ✅ Convert Decimal to int or float
+        return int(obj) if obj % 1 == 0 else float(obj)
+    else:
+        return obj
+
+# Lambda Function
+def lambda_handler(event, context):
+    response = table.scan(Limit=10)  # Get recent 10 logs
+    logs = response["Items"]
+
+    findings = []
+    
+    for log in logs:
+        if log["eventName"] in SUSPICIOUS_ACTIONS:
+            # ✅ Convert Decimal values
+            log = convert_decimals(log)
+
+            # ✅ Extract user ARN safely
+            user_identity = log.get("userIdentity", {})
+            user_arn = user_identity.get("arn", user_identity.get("principalId", "Unknown"))
+
+            # ✅ Use Claude 3 for threat analysis
+            request_body = json.dumps({
+                "prompt": f"Analyze this IAM event and detect potential threats:\n{json.dumps(log, indent=2)}",
+                "max_tokens": 500,
+                "temperature": 0.2
+            })
+
+            try:
+                # Call AWS Bedrock Claude 3 Model
+                bedrock_response = bedrock.invoke_model(
+                    modelId="anthropic.claude-3",
+                    body=request_body
+                )
+
+                result = json.loads(bedrock_response["body"].read().decode("utf-8"))
+                risk_assessment = result.get("completion", "No analysis available")
+
+                findings.append({
+                    "event": log["eventName"],
+                    "user": user_arn,
+                    "risk_assessment": risk_assessment
+                })
+            
+            except Exception as e:
+                findings.append({
+                    "event": log["eventName"],
+                    "user": user_arn,
+                    "error": str(e)
+                })
+
+    return {"status": "Analysis Complete", "findings": findings}
