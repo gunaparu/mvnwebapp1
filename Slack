@@ -100,3 +100,51 @@ def lambda_handler(event, context):
             })
     
     return {"status": "Analysis Complete", "findings": findings}
+
+import boto3
+import json
+import base64
+
+# AWS Clients
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+bedrock = boto3.client("bedrock-runtime")  # AWS Bedrock Runtime API
+
+# Define Suspicious Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser"
+]
+
+# Function to generate embeddings using Titan Embeddings
+def get_text_embedding(text):
+    payload = {
+        "inputText": text
+    }
+
+    response = bedrock.invoke_model(
+        modelId="amazon.titan-embed-text-v1",
+        body=json.dumps(payload)
+    )
+    
+    response_body = json.loads(response["body"].read().decode("utf-8"))
+    return response_body["embedding"]
+
+# Lambda Function
+def lambda_handler(event, context):
+    response = table.scan(Limit=10)  # Get recent 10 logs
+    logs = response["Items"]
+
+    findings = []
+    
+    for log in logs:
+        if log["eventName"] in SUSPICIOUS_ACTIONS:
+            event_text = json.dumps(log, indent=2)
+            embedding = get_text_embedding(event_text)  # Convert log event to vector
+            
+            findings.append({
+                "event": log["eventName"],
+                "user": log["userIdentity"]["arn"],
+                "embedding": embedding  # Store embedding for threat analysis
+            })
+    
+    return {"status": "Analysis Complete", "findings": findings}
