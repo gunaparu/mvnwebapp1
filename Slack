@@ -148,3 +148,43 @@ def lambda_handler(event, context):
             })
     
     return {"status": "Analysis Complete", "findings": findings}
+SUSPICIOUS_ACTIONS = [
+    # 🚨 Privilege Escalation
+    "AttachRolePolicy", "DetachRolePolicy", "PassRole", "UpdateAssumeRolePolicy",
+    "CreatePolicyVersion", "SetDefaultPolicyVersion",
+
+    # 🚨 User & Role Management
+    "CreateUser", "DeleteUser", "UpdateUser",
+    "CreateRole", "DeleteRole", "UpdateRole",
+    "AddUserToGroup", "RemoveUserFromGroup",
+
+    # 🚨 Access Key & Login Profile (Account Takeover)
+    "CreateAccessKey", "DeleteAccessKey", "UpdateAccessKey",
+    "CreateLoginProfile", "UpdateLoginProfile", "DeleteLoginProfile",
+
+    # 🚨 Policy & Permissions Management
+    "CreatePolicy", "DeletePolicy", "PutUserPolicy", "DeleteUserPolicy",
+    "PutRolePolicy", "DeleteRolePolicy",
+
+    # 🚨 MFA & Security Controls Bypass
+    "DeactivateMFADevice", "EnableMFADevice", "ResyncMFADevice",
+    "UpdateAccountPasswordPolicy",
+
+    # 🚨 Assume Role (Lateral Movement)
+    "AssumeRole", "GetSessionToken", "GetFederationToken",
+
+    # 🚨 Service-Linked Role Modifications
+    "DeleteServiceLinkedRole", "UpdateServiceLinkedRole",
+
+    # 🚨 Instance Profile Manipulation (AWS Resource Takeover)
+    "CreateInstanceProfile", "DeleteInstanceProfile",
+    "AddRoleToInstanceProfile", "RemoveRoleFromInstanceProfile",
+
+    # 🚨 Credential & Secrets Exposure
+    "GetSecretValue", "PutSecretValue", "DeleteSecret",
+    "GetParameter", "PutParameter", "DeleteParameter",
+
+    # 🚨 CloudTrail & Logging Manipulation (Covering Tracks)
+    "StopLogging", "DeleteTrail", "UpdateTrail",
+    "PutEventSelectors", "PutInsightSelectors"
+]
