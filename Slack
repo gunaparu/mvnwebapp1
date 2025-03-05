@@ -1,24 +1,32 @@
 import boto3
 import json
 import gzip
+import time
 
 S3_BUCKET_NAME = "your-cloudtrail-log-bucket"
+DYNAMODB_TABLE_NAME = "IAMThreatLogs"
 
 s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
-table_name = "IAMThreatLogs"
+client = boto3.client("dynamodb")
 
-# Function to check if the table exists
+# Function to check and create the table
 def check_and_create_table():
-    existing_tables = dynamodb.meta.client.list_tables()["TableNames"]
-    if table_name not in existing_tables:
-        dynamodb.create_table(
-            TableName=table_name,
+    existing_tables = client.list_tables()["TableNames"]
+    
+    if DYNAMODB_TABLE_NAME not in existing_tables:
+        print(f"Table {DYNAMODB_TABLE_NAME} not found. Creating...")
+        client.create_table(
+            TableName=DYNAMODB_TABLE_NAME,
             AttributeDefinitions=[{"AttributeName": "eventID", "AttributeType": "S"}],
             KeySchema=[{"AttributeName": "eventID", "KeyType": "HASH"}],
             BillingMode="PAY_PER_REQUEST"
         )
-        print(f"Table {table_name} created successfully!")
+
+        # Wait until the table is active
+        waiter = client.get_waiter("table_exists")
+        waiter.wait(TableName=DYNAMODB_TABLE_NAME)
+        print(f"Table {DYNAMODB_TABLE_NAME} created successfully!")
 
 # Lambda function
 def lambda_handler(event, context):
@@ -41,9 +49,9 @@ def lambda_handler(event, context):
         log_data = gzip.decompress(response["Body"].read()).decode("utf-8")
         cloudtrail_events = json.loads(log_data)["Records"]
 
-        table = dynamodb.Table(table_name)
+        table = dynamodb.Table(DYNAMODB_TABLE_NAME)
         for log in cloudtrail_events:
-            log["eventID"] = log.get("eventID", "unknown")  # Ensure primary key exists
+            log["eventID"] = log.get("eventID", str(time.time()))  # Ensure primary key exists
             table.put_item(Item=log)
 
         return {"status": "IAM logs stored in DynamoDB"}
