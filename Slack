@@ -491,3 +491,70 @@ def lambda_handler(event, context):
                 })
 
     return {"status": "Analysis Complete", "findings": findings}
+
+import boto3
+import json
+import decimal
+
+# AWS Clients
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+bedrock = boto3.client("bedrock-runtime")
+
+# Define High-Risk IAM Actions
+SUSPICIOUS_ACTIONS = [
+    "CreateUser", "DeleteUser", "AttachUserPolicy", "DetachUserPolicy",
+    "CreateRole", "DeleteRole", "AttachRolePolicy", "DetachRolePolicy",
+    "CreateAccessKey", "DeleteAccessKey", "UpdateAccessKey",
+    "AssumeRole", "PassRole", "UpdateAssumeRolePolicy",
+    "DeactivateMFADevice", "DeleteVirtualMFADevice",
+    "CreatePolicy", "DeletePolicy", "PutUserPolicy", "DeleteUserPolicy"
+]
+
+# Function to Convert Decimal to Float (Fix DynamoDB JSON Serialization Issue)
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
+# Lambda Handler
+def lambda_handler(event, context):
+    response = table.scan(Limit=10)  # Fetch latest 10 IAM logs
+    logs = response["Items"]
+
+    findings = []
+
+    for log in logs:
+        if log["eventName"] in SUSPICIOUS_ACTIONS:
+            prompt = f"""
+            Analyze this AWS IAM event for security threats:
+            {json.dumps(log, indent=2, cls=DecimalEncoder)}
+            
+            Identify potential security risks and provide mitigation strategies.
+            """
+
+            try:
+                # Call Claude 3.5 Sonnet for Threat Analysis
+                bedrock_response = bedrock.invoke_model(
+                    modelId="anthropic.claude-3.5-sonnet",
+                    body=json.dumps({"prompt": prompt, "max_tokens": 500})
+                )
+
+                result = json.loads(bedrock_response["body"].read().decode("utf-8"))
+                risk_assessment = result.get("completion", "No analysis available")
+
+                findings.append({
+                    "event": log["eventName"],
+                    "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                    "risk_assessment": risk_assessment
+                })
+
+            except Exception as e:
+                findings.append({
+                    "event": log["eventName"],
+                    "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                    "error": str(e)
+                })
+
+    return {"status": "Analysis Complete", "findings": findings}
