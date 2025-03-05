@@ -1,1 +1,16 @@
-
+aws cloudtrail put-event-selectors \
+    --trail-name IAM-Logging-Trail \
+    --event-selectors '[{
+        "ReadWriteType": "All",
+        "IncludeManagementEvents": true,
+        "DataResources": [
+            {
+                "Type": "AWS::IAM::Role",
+                "Values": ["*"]
+            },
+            {
+                "Type": "AWS::IAM::User",
+                "Values": ["*"]
+            }
+        ]
+    }]'
