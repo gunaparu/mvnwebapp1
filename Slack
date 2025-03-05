@@ -423,3 +423,71 @@ def lambda_handler(event, context):
                 })
 
     return {"status": "Analysis Complete", "findings": findings}
+import boto3
+import json
+import decimal
+
+# AWS Clients
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table("IAMThreatLogs")
+bedrock = boto3.client("bedrock-runtime")  # AWS Bedrock Runtime API
+
+# Define Suspicious Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser",
+    "UpdateRole", "PutUserPolicy", "DeleteRolePolicy", "UpdateAssumeRolePolicy"
+]
+
+# Convert Decimal to JSON
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
+# Lambda Function
+def lambda_handler(event, context):
+    response = table.scan(Limit=10)  # Get recent 10 logs
+    logs = response["Items"]
+
+    findings = []
+
+    for log in logs:
+        if log["eventName"] in SUSPICIOUS_ACTIONS:
+            prompt = f"Analyze this IAM event for security risks:\n{json.dumps(log, indent=2, cls=DecimalEncoder)}"
+
+            # Proper Titan API Request Format
+            body_payload = json.dumps({
+                "inputText": prompt,
+                "textGenerationConfig": {
+                    "maxTokenCount": 512,   # Increased token count for better analysis
+                    "temperature": 0.7,     # Moderate randomness
+                    "topP": 0.9,            # Keeps response diverse but relevant
+                    "stopSequences": []     # No stop sequences
+                }
+            })
+
+            try:
+                bedrock_response = bedrock.invoke_model(
+                    modelId="amazon.titan-text-express-v1",
+                    body=body_payload
+                )
+                result = json.loads(bedrock_response["body"].read().decode("utf-8"))
+                
+                # Extracting the model response
+                risk_assessment = result.get("results", [{}])[0].get("outputText", "No analysis available")
+
+                findings.append({
+                    "event": log["eventName"],
+                    "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                    "risk_assessment": risk_assessment
+                })
+
+            except Exception as e:
+                findings.append({
+                    "event": log["eventName"],
+                    "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                    "error": f"Error analyzing event: {str(e)}"
+                })
+
+    return {"status": "Analysis Complete", "findings": findings}
