@@ -1084,3 +1084,12 @@ def lambda_handler(event, context):
     analysis = analyze_logs_with_claude(logs)
 
     return {"status": "Analysis Complete", "findings": analysis}
+
+iam_logs = []
+for log in cloudtrail_events:
+    print("Checking log:", json.dumps(log, indent=2))  # Debugging
+    if log.get("eventSource") == "iam.amazonaws.com":
+        iam_logs.append(log)  # Add all IAM events for testing
+
+print(f"Total IAM logs found: {len(iam_logs)}")
+
