@@ -872,3 +872,118 @@ def lambda_handler(event, context):
         print(f"Error processing event: {e}")
         return {"status": "Error processing event", "error": str(e)}
 
+import boto3
+import json
+import gzip
+import time
+from decimal import Decimal
+
+# AWS Resource Initialization
+s3 = boto3.client("s3")
+dynamodb = boto3.resource("dynamodb")
+bedrock = boto3.client("bedrock-runtime")
+client = boto3.client("dynamodb")
+
+# Configuration
+S3_BUCKET_NAME = "your-cloudtrail-log-bucket"
+DYNAMODB_TABLE_NAME = "IAMThreatLogs"
+CLAUDE_MODEL_ID = "anthropic.claude-3.5-sonnet-20240620-v1:0"
+
+# Define Suspicious Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser",
+    "AssumeRole", "CreatePolicy", "PutUserPolicy", "UpdateRole", "DetachRolePolicy",
+    "DeleteRole", "DeletePolicy", "DeleteAccessKey"
+]
+
+# Function to check and create the table if not exists
+def check_and_create_table():
+    existing_tables = client.list_tables()["TableNames"]
+    
+    if DYNAMODB_TABLE_NAME not in existing_tables:
+        print(f"Table {DYNAMODB_TABLE_NAME} not found. Creating...")
+        client.create_table(
+            TableName=DYNAMODB_TABLE_NAME,
+            AttributeDefinitions=[{"AttributeName": "eventID", "AttributeType": "S"}],
+            KeySchema=[{"AttributeName": "eventID", "KeyType": "HASH"}],
+            BillingMode="PAY_PER_REQUEST"
+        )
+
+        # Wait until the table is active
+        waiter = client.get_waiter("table_exists")
+        waiter.wait(TableName=DYNAMODB_TABLE_NAME)
+        print(f"Table {DYNAMODB_TABLE_NAME} created successfully!")
+
+# Function to convert Decimal types to JSON serializable format
+def json_serializer(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError("Type not serializable")
+
+# Lambda Function
+def lambda_handler(event, context):
+    check_and_create_table()  # Ensure table exists before inserting logs
+
+    print("Received event:", json.dumps(event, indent=4, default=str))
+
+    try:
+        # Extract S3 object key
+        if "Records" in event and len(event["Records"]) > 0 and "s3" in event["Records"][0]:
+            bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
+            object_key = event["Records"][0]["s3"]["object"]["key"]
+        else:
+            bucket_name = S3_BUCKET_NAME
+            object_key = "AWSLogs/123456789012/CloudTrail/us-east-1/2025/03/06/correct-log-file.json.gz"
+
+        print(f"Fetching file: {object_key} from bucket: {bucket_name}")
+
+        response = s3.get_object(Bucket=bucket_name, Key=object_key)
+        log_data = gzip.decompress(response["Body"].read()).decode("utf-8")
+        cloudtrail_events = json.loads(log_data)["Records"]
+
+        table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+
+        findings = []
+
+        for log in cloudtrail_events:
+            log["eventID"] = log.get("eventID", str(time.time()))  # Ensure primary key exists
+            table.put_item(Item=log)  # Store log in DynamoDB
+
+            # Check for suspicious IAM events
+            if log["eventName"] in SUSPICIOUS_ACTIONS:
+                messages = [
+                    {"role": "user", "content": f"Analyze this IAM event for security risks:\n{json.dumps(log, indent=2, default=json_serializer)}"}
+                ]
+
+                try:
+                    bedrock_response = bedrock.invoke_model(
+                        modelId=CLAUDE_MODEL_ID,
+                        body=json.dumps({
+                            "messages": messages,
+                            "max_tokens": 300,
+                            "temperature": 0.5,
+                            "anthropic_version": "bedrock-2023-05-31"
+                        })
+                    )
+
+                    response_body = json.loads(bedrock_response["body"].read().decode("utf-8"))
+                    risk_assessment = response_body.get("content", "No analysis available")
+
+                    findings.append({
+                        "event": log["eventName"],
+                        "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                        "risk_assessment": risk_assessment
+                    })
+                except Exception as bedrock_error:
+                    print(f"Error invoking Claude 3.5: {bedrock_error}")
+                    findings.append({
+                        "event": log["eventName"],
+                        "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                        "error": str(bedrock_error)
+                    })
+
+        return {"status": "Analysis Complete", "findings": findings}
+
+    except Exception as e:
+        print(f"Error processing event: {e}")
+        return {"status": "Error processing event", "error": str(e)}
