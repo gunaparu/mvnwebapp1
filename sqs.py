@@ -252,11 +252,23 @@ if __name__ == "__main__":
     
     
 def analyze_with_claude(iam_logs):
-    """Analyze IAM logs using AWS Bedrock Claude 3.5 Sonnet."""
+    """Analyze IAM logs using AWS Bedrock Claude 3.5 Sonnet and categorize risks."""
     findings = []
     
     for log in iam_logs:
-        prompt = f"\n\nHuman: Analyze this IAM event for security risks:\n{json.dumps(log, indent=2)}\n\nAssistant:"
+        prompt = f"""
+        Human: Analyze this AWS IAM security event and classify its risk level as Critical, High, Medium, or Low. Provide justification.
+        Event Details:
+        {json.dumps(log, indent=2)}
+        
+        Output format:
+        {{
+          "risk_level": "<Critical | High | Medium | Low>",
+          "justification": "<Reasoning for risk categorization>"
+        }}
+        
+        Assistant:
+        """
         payload = {
             "anthropic_version": "bedrock-2023-05-31",
             "messages": [{"role": "user", "content": prompt}],
@@ -272,27 +284,24 @@ def analyze_with_claude(iam_logs):
             )
             result = json.loads(response["body"].read().decode("utf-8"))
 
-            # Extract risk assessment as a string
-            risk_assessment = result.get("content", ["No analysis available"])
+            # Extract risk level and justification
+            risk_data = result.get("content", ["{}"])[0]
+            if isinstance(risk_data, str):
+                risk_data = json.loads(risk_data)  # Convert JSON string to dict
             
-            if isinstance(risk_assessment, list) and risk_assessment:
-                risk_assessment = risk_assessment[0]  # Get the first response if it's a list
-            elif isinstance(risk_assessment, dict):
-                risk_assessment = json.dumps(risk_assessment)  # Convert dict to string if needed
-            elif not isinstance(risk_assessment, str):
-                risk_assessment = "No analysis available"
-
-            print(f"Risk Assessment for {log['eventName']}: {risk_assessment}")  # Debugging
+            risk_level = risk_data.get("risk_level", "Unknown")
+            justification = risk_data.get("justification", "No explanation provided")
 
             finding = {
                 "event": log["eventName"],
                 "user": log.get("userIdentity", {}).get("arn", "Unknown"),
-                "risk_assessment": risk_assessment
+                "risk_level": risk_level,
+                "justification": justification
             }
             findings.append(finding)
 
-            # More flexible condition to trigger alert
-            if any(keyword in risk_assessment.lower() for keyword in ["privilege", "escalation", "unauthorized", "malicious", "risky"]):
+            # Send alert only for High and Critical risks
+            if risk_level in ["Critical", "High"]:
                 send_alert(finding)
 
         except Exception as e:
