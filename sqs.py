@@ -249,3 +249,58 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
+def analyze_with_claude(iam_logs):
+    """Analyze IAM logs using AWS Bedrock Claude 3.5 Sonnet."""
+    findings = []
+    
+    for log in iam_logs:
+        prompt = f"\n\nHuman: Analyze this IAM event for security risks:\n{json.dumps(log, indent=2)}\n\nAssistant:"
+        payload = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 300
+        }
+
+        try:
+            response = bedrock.invoke_model(
+                modelId=CLAUDE_MODEL_ID,
+                contentType="application/json",
+                accept="application/json",
+                body=json.dumps(payload)
+            )
+            result = json.loads(response["body"].read().decode("utf-8"))
+
+            # Extract risk assessment as a string
+            risk_assessment = result.get("content", ["No analysis available"])
+            
+            if isinstance(risk_assessment, list) and risk_assessment:
+                risk_assessment = risk_assessment[0]  # Get the first response if it's a list
+            elif isinstance(risk_assessment, dict):
+                risk_assessment = json.dumps(risk_assessment)  # Convert dict to string if needed
+            elif not isinstance(risk_assessment, str):
+                risk_assessment = "No analysis available"
+
+            print(f"Risk Assessment for {log['eventName']}: {risk_assessment}")  # Debugging
+
+            finding = {
+                "event": log["eventName"],
+                "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                "risk_assessment": risk_assessment
+            }
+            findings.append(finding)
+
+            # More flexible condition to trigger alert
+            if any(keyword in risk_assessment.lower() for keyword in ["privilege", "escalation", "unauthorized", "malicious", "risky"]):
+                send_alert(finding)
+
+        except Exception as e:
+            print(f"Error invoking Claude 3.5: {e}")
+            findings.append({
+                "event": log["eventName"],
+                "user": log.get("userIdentity", {}).get("arn", "Unknown"),
+                "error": str(e)
+            })
+
+    return findings
