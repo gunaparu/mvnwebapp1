@@ -987,3 +987,100 @@ def lambda_handler(event, context):
     except Exception as e:
         print(f"Error processing event: {e}")
         return {"status": "Error processing event", "error": str(e)}
+
+
+
+
+
+
+
+
+
+
+import boto3
+import json
+import gzip
+
+# AWS Services
+s3 = boto3.client("s3")
+bedrock = boto3.client("bedrock-runtime")
+
+# Claude 3.5 Sonnet Model ID
+CLAUDE_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+
+# Suspicious IAM Actions
+SUSPICIOUS_ACTIONS = [
+    "AttachRolePolicy", "PassRole", "CreateUser", "CreateAccessKey", "DeleteUser",
+    "AssumeRole", "CreatePolicy", "DeleteRole", "PutUserPolicy", "UpdateAssumeRolePolicy",
+    "AttachUserPolicy", "DetachUserPolicy"
+]
+
+# Function to fetch & preprocess CloudTrail logs
+def preprocess_iam_logs(bucket_name, object_key):
+    try:
+        # Fetch S3 object
+        response = s3.get_object(Bucket=bucket_name, Key=object_key)
+
+        # Decompress the CloudTrail log file
+        log_data = gzip.decompress(response["Body"].read()).decode("utf-8")
+
+        # Parse JSON
+        cloudtrail_events = json.loads(log_data)["Records"]
+
+        # Filter IAM-related logs
+        iam_logs = [
+            log for log in cloudtrail_events
+            if log.get("eventSource") == "iam.amazonaws.com" and log.get("eventName") in SUSPICIOUS_ACTIONS
+        ]
+
+        return iam_logs
+
+    except Exception as e:
+        print(f"Error processing S3 object: {e}")
+        return None
+
+# Function to analyze logs using Claude 3.5 Sonnet
+def analyze_logs_with_claude(logs):
+    try:
+        messages = [
+            {"role": "system", "content": "You are a cybersecurity expert analyzing IAM events for security risks."}
+        ]
+
+        for log in logs:
+            messages.append({
+                "role": "user",
+                "content": f"Analyze this IAM event for security risks:\n{json.dumps(log, indent=2)}"
+            })
+
+        # Invoke Claude 3.5 Sonnet on AWS Bedrock
+        response = bedrock.invoke_model(
+            modelId=CLAUDE_MODEL_ID,
+            body=json.dumps({
+                "anthropic_version": "bedrock-2023-05-31",
+                "messages": messages,
+                "max_tokens": 500,
+                "temperature": 0.7
+            })
+        )
+
+        result = json.loads(response["body"].read().decode("utf-8"))
+        return result
+
+    except Exception as e:
+        print(f"Error invoking Claude 3.5: {e}")
+        return None
+
+# Lambda Handler
+def lambda_handler(event, context):
+    bucket = "your-cloudtrail-log-bucket"
+    object_key = "AWSLogs/123456789012/CloudTrail/us-east-1/2025/03/06/log-file.json.gz"
+
+    # Preprocess logs
+    logs = preprocess_iam_logs(bucket, object_key)
+    if not logs:
+        return {"status": "No relevant IAM logs found"}
+
+    # Analyze logs with Claude
+    analysis = analyze_logs_with_claude(logs)
+
+    return {"status": "Analysis Complete", "findings": analysis}
