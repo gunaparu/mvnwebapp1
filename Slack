@@ -1093,3 +1093,26 @@ for log in cloudtrail_events:
 
 print(f"Total IAM logs found: {len(iam_logs)}")
 
+iam_logs = []
+for log in cloudtrail_events:
+    # Get event source, fallback to empty string
+    event_source = log.get("eventSource", "")
+
+    # If eventSource is missing, infer it from other fields
+    if not event_source:
+        user_identity = log.get("userIdentity", {})
+        session_context = user_identity.get("sessionContext", {})
+        session_issuer = session_context.get("sessionIssuer", {})
+        role_arn = session_issuer.get("arn", "")
+
+        if "iam::" in role_arn:  # Detect IAM-related events
+            event_source = "iam.amazonaws.com"
+
+    # Debugging: Print event details
+    print(f"Processed Log - Event Source: {event_source}, Log: {json.dumps(log, indent=2)}")
+
+    # Filter IAM-related logs
+    if "iam.amazonaws.com" in event_source:
+        iam_logs.append(log)
+
+print(f"Total IAM logs found: {len(iam_logs)}")
