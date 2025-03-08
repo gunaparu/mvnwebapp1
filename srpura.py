@@ -129,3 +129,83 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
+    
+import requests
+import boto3
+import json
+import os
+
+# 🟢 Wiz API Credentials (Use AWS Secrets Manager for security in production)
+WIZ_CLIENT_ID = os.environ["WIZ_CLIENT_ID"]
+WIZ_CLIENT_SECRET = os.environ["WIZ_CLIENT_SECRET"]
+WIZ_AUTH_URL = "https://auth.wiz.io/oauth/token"  # Authentication endpoint
+WIZ_API_URL = "https://api.wiz.io/graphql"
+
+# 🟢 AWS S3 Configuration
+S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
+
+# 🟢 AWS Clients
+s3 = boto3.client("s3")
+
+def get_wiz_access_token():
+    """Authenticate and get Wiz API access token."""
+    payload = {
+        "client_id": WIZ_CLIENT_ID,
+        "client_secret": WIZ_CLIENT_SECRET,
+        "audience": "wiz-api",
+        "grant_type": "client_credentials"
+    }
+    
+    response = requests.post(WIZ_AUTH_URL, json=payload)
+    
+    if response.status_code == 200:
+        return response.json()["access_token"]
+    else:
+        print(f"⚠️ Failed to authenticate with Wiz API: {response.text}")
+        return None
+
+def fetch_cspm_issues():
+    """Fetch CSPM issues from Wiz API."""
+    access_token = get_wiz_access_token()
+    if not access_token:
+        return []
+
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    QUERY = """
+    {
+      issues {
+        edges {
+          node {
+            id
+            title
+            riskLevel
+            createdAt
+            entities { name }
+          }
+        }
+      }
+    }
+    """
+    
+    response = requests.post(WIZ_API_URL, json={"query": QUERY}, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json().get("data", {}).get("issues", {}).get("edges", [])
+        return [
+            {
+                "issue_id": item["node"]["id"],
+                "title": item["node"]["title"],
+                "resource_name": item["node"]["entities"][0]["name"] if item["node"]["entities"] else "Unknown",
+                "risk_level": item["node"]["riskLevel"],
+                "reported_date": item["node"]["createdAt"],
+            }
+            for item in data
+        ]
+    else:
+        print(f"⚠️ API Error: {response.status_code} - {response.text}")
+        return []
