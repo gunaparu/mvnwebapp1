@@ -284,3 +284,120 @@ if st.button("Send"):
 
         # Refresh page to update chat
         st.experimental_rerun()
+
+
+import streamlit as st
+import boto3
+import json
+from langchain.memory import ConversationBufferMemory
+
+# AWS Bedrock Configuration
+AWS_REGION = "us-east-1"
+CLAUDE_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+
+# Initialize Bedrock client
+bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+
+# Set up memory for chat history
+if "memory" not in st.session_state:
+    st.session_state.memory = ConversationBufferMemory()
+
+st.set_page_config(page_title="AWS Bedrock Chatbot", page_icon="🤖", layout="wide")
+
+# Custom Chat UI
+st.markdown(
+    """
+    <style>
+    .chat-container { max-width: 700px; margin: auto; }
+    .chat-bubble-user { background-color: #dcf8c6; padding: 10px; border-radius: 10px; margin: 5px 0; max-width: 80%; align-self: flex-end; }
+    .chat-bubble-bot { background-color: #f1f0f0; padding: 10px; border-radius: 10px; margin: 5px 0; max-width: 80%; align-self: flex-start; }
+    .message-box { display: flex; flex-direction: column; align-items: flex-start; }
+    .message-box.user { align-items: flex-end; }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+def get_bedrock_response(prompt, chat_history):
+    """Invoke Amazon Bedrock Claude 3.5 model with chat history."""
+    full_prompt = chat_history + f"\nUser: {prompt}\nClaude:"
+
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": [{"role": "user", "content": full_prompt}],
+        "max_tokens": 500
+    }
+
+    try:
+        response = bedrock_client.invoke_model(
+            modelId=CLAUDE_MODEL_ID,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(payload)
+        )
+        response_body = json.loads(response["body"].read().decode("utf-8"))
+        
+        if isinstance(response_body, dict) and "content" in response_body:
+            if isinstance(response_body["content"], list):
+                return "\n".join(item.get("text", "") if isinstance(item, dict) else str(item) for item in response_body["content"])
+            elif isinstance(response_body["content"], str):
+                return response_body["content"]
+        
+        return "Error: Unexpected response format from Claude"
+
+    except Exception as e:
+        return f"Error calling Claude 3.5: {e}"
+
+# Sidebar
+with st.sidebar:
+    st.header("🤖 Chatbot Settings")
+    if st.button("🗑️ Clear Chat"):
+        st.session_state.memory.clear()
+        st.session_state.messages = []
+        st.rerun()
+
+# Chat UI
+st.title("AWS Bedrock Chatbot 🤖")
+st.markdown("### 💬 Chat with AI")
+
+# Initialize session state for chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+chat_history_text = "\n".join(
+    [f"{role.capitalize()}: {content}" for role, content in st.session_state.messages]
+)
+
+chat_container = st.container()
+
+# Display previous chat messages
+with chat_container:
+    for role, content in st.session_state.messages:
+        if role == "user":
+            st.markdown(f'<div class="message-box user"><div class="chat-bubble-user">{content}</div></div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="message-box"><div class="chat-bubble-bot">{content}</div></div>', unsafe_allow_html=True)
+
+# User Input
+user_input = st.text_input("Type your message here...", key="input")
+
+if st.button("Send"):
+    if user_input:
+        # Append user input to chat history
+        st.session_state.messages.append(("user", user_input))
+
+        # Retrieve past chat context from LangChain memory
+        past_context = st.session_state.memory.load_memory_variables({}).get("history", "")
+
+        # Get response from Claude 3.5 with memory
+        with st.spinner("Thinking..."):
+            response = get_bedrock_response(user_input, past_context)
+
+        # Append to memory
+        st.session_state.memory.save_context({"input": user_input}, {"output": response})
+
+        # Append bot response to chat history
+        st.session_state.messages.append(("bot", response))
+
+        # Refresh page to update chat
+        st.rerun()
