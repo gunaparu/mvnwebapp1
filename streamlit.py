@@ -789,3 +789,44 @@ if st.session_state.get("submitted"):
     # Clear input field after submission
     st.session_state["submitted"] = False
     st.experimental_rerun()
+    
+def get_bedrock_response(prompt, chat_history, security_guidelines):
+    """Invoke Amazon Bedrock Claude 3.5 model with chat history and security guidelines."""
+    full_prompt = f"""
+    Previous Conversation: {chat_history}
+    
+    User Query: {prompt}
+    
+    Security Guidelines Reference:
+    {security_guidelines}
+
+    Claude:
+    """
+
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": [{"role": "user", "content": full_prompt}],
+        "max_tokens": 500
+    }
+
+    try:
+        response = bedrock_client.invoke_model(
+            modelId=CLAUDE_MODEL_ID,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(payload)
+        )
+        response_body = json.loads(response["body"].read().decode("utf-8"))
+
+        # **Fix: Extract text properly**
+        if "content" in response_body and isinstance(response_body["content"], list):
+            # Extract text from list of message objects
+            extracted_text = "\n".join(
+                item["text"] for item in response_body["content"] if isinstance(item, dict) and "text" in item
+            )
+            return extracted_text if extracted_text else "Error: No valid text in response."
+
+        return "Error: Unexpected response format from Claude."
+
+    except Exception as e:
+        return f"Error calling Claude 3.5: {e}"
