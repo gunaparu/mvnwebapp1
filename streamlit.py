@@ -401,3 +401,141 @@ if st.button("Send"):
 
         # Refresh page to update chat
         st.rerun()
+
+
+import streamlit as st
+import boto3
+import json
+import os
+import markdown
+import tempfile
+from langchain.memory import ConversationBufferMemory
+from langchain.schema import AIMessage, HumanMessage
+from botocore.exceptions import NoCredentialsError
+import speech_recognition as sr
+
+# AWS Configuration
+AWS_REGION = "us-east-1"
+CLAUDE_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+S3_BUCKET_NAME = "your-security-guidelines-bucket"
+DYNAMODB_TABLE = "ChatHistory"
+
+# Initialize AWS clients
+bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+s3_client = boto3.client("s3", region_name=AWS_REGION)
+dynamodb = boto3.resource("dynamodb", region_name=AWS_REGION)
+
+# LangChain memory
+memory = ConversationBufferMemory(return_messages=True)
+
+# UI Enhancements
+st.set_page_config(page_title="AWS Bedrock Chatbot", layout="wide")
+
+# Dark mode toggle
+dark_mode = st.sidebar.checkbox("🌙 Dark Mode")
+
+# Load chat history from DynamoDB
+def load_chat_history():
+    try:
+        table = dynamodb.Table(DYNAMODB_TABLE)
+        response = table.scan()
+        return response.get("Items", [])
+    except Exception:
+        return []
+
+# Save chat history to DynamoDB
+def save_chat_history(user_message, ai_message):
+    table = dynamodb.Table(DYNAMODB_TABLE)
+    table.put_item(Item={"user": user_message, "ai": ai_message})
+
+# Fetch security guidelines from S3
+def get_security_guidelines():
+    try:
+        obj = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key="security_guidelines.txt")
+        return obj["Body"].read().decode("utf-8")
+    except NoCredentialsError:
+        return "AWS credentials not found."
+    except Exception as e:
+        return f"Error retrieving security guidelines: {e}"
+
+# Invoke Claude 3.5
+def get_bedrock_response(prompt):
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 500
+    }
+    
+    try:
+        response = bedrock_client.invoke_model(
+            modelId=CLAUDE_MODEL_ID,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(payload)
+        )
+        response_body = json.loads(response["body"].read().decode("utf-8"))
+        return response_body.get("content", ["Error: No response"])[0]
+    except Exception as e:
+        return f"Error calling Claude 3.5: {e}"
+
+# Voice input
+def recognize_speech():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.info("Listening... Speak now.")
+        try:
+            audio = recognizer.listen(source, timeout=5)
+            return recognizer.recognize_google(audio)
+        except sr.UnknownValueError:
+            return "Sorry, I couldn't understand the audio."
+        except sr.RequestError:
+            return "Speech recognition service is unavailable."
+        except Exception:
+            return "Error processing voice input."
+
+# Streamlit UI
+st.title("🤖 AWS Bedrock Chatbot")
+st.write("Chat with Claude 3.5 Sonnet using Amazon Bedrock!")
+
+# Sidebar for settings
+st.sidebar.title("⚙️ Settings")
+use_voice = st.sidebar.checkbox("🎤 Enable Voice Input")
+
+# Chat history UI
+if "messages" not in st.session_state:
+    st.session_state.messages = load_chat_history()
+
+# Display chat history
+for message in st.session_state.messages:
+    role, content = message
+    if role == "user":
+        st.markdown(f"**🧑‍💻 You:** {content}")
+    else:
+        st.markdown(f"**🤖 Claude 3.5:** {content}")
+
+# User Input
+user_input = st.text_input("💬 Type your message here...", key="user_input")
+
+# Handle voice input
+if use_voice:
+    if st.button("🎤 Speak"):
+        user_input = recognize_speech()
+        st.session_state.user_input = user_input
+
+if st.button("🚀 Send"):
+    if user_input:
+        security_data = get_security_guidelines()
+        full_prompt = f"{security_data}\n\nUser: {user_input}"
+        
+        response = get_bedrock_response(full_prompt)
+
+        # Save messages in session and DynamoDB
+        st.session_state.messages.append(("user", user_input))
+        st.session_state.messages.append(("ai", response))
+        save_chat_history(user_input, response)
+
+        # Display response
+        st.markdown(f"**🤖 Claude 3.5:** {response}")
+
+        # Clear input field
+        st.session_state.user_input = ""
