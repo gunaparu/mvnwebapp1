@@ -539,3 +539,111 @@ if st.button("🚀 Send"):
 
         # Clear input field
         st.session_state.user_input = ""
+        
+        
+        
+        
+        
+        
+
+
+import streamlit as st
+import boto3
+import json
+from langchain.memory import ConversationBufferMemory
+from langchain.schema import AIMessage, HumanMessage
+
+# AWS Configuration
+AWS_REGION = "us-east-1"
+CLAUDE_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+S3_BUCKET_NAME = "your-security-bucket"  # Update with your S3 bucket name
+SECURITY_GUIDELINES_FILE = "security_guidelines.txt"  # Stored in S3
+
+# Initialize AWS Clients
+bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+s3_client = boto3.client("s3", region_name=AWS_REGION)
+
+# Initialize LangChain Memory
+memory = ConversationBufferMemory(return_messages=True)
+
+def get_bedrock_response(prompt):
+    """Invoke Amazon Bedrock Claude 3.5 model to generate responses."""
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 500
+    }
+
+    try:
+        response = bedrock_client.invoke_model(
+            modelId=CLAUDE_MODEL_ID,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(payload)
+        )
+        response_body = json.loads(response["body"].read().decode("utf-8"))
+        return response_body.get("content", ["Error: No response"])[0]
+    except Exception as e:
+        return f"Error calling Claude 3.5: {e}"
+
+def get_security_guidelines():
+    """Retrieve security guidelines from S3."""
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=SECURITY_GUIDELINES_FILE)
+        guidelines = response["Body"].read().decode("utf-8")
+        return guidelines
+    except Exception as e:
+        return f"Error fetching security guidelines: {e}"
+
+# Streamlit UI Enhancements
+st.set_page_config(page_title="AWS Bedrock Chatbot", page_icon="🤖", layout="wide")
+st.markdown("<h1 style='text-align: center;'>AWS Bedrock Chatbot 🤖</h1>", unsafe_allow_html=True)
+
+# Dark Mode Toggle
+dark_mode = st.toggle("🌙 Dark Mode")
+
+# Initialize session state for chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Collapsible Chat History
+with st.expander("📜 Chat History", expanded=False):
+    for role, content in st.session_state.messages:
+        avatar = "🧑‍💻" if role == "user" else "🤖"
+        st.markdown(f"**{avatar} {role.capitalize()}:** {content}")
+
+# User Input
+user_input = st.text_input("Type your message here...")
+
+if st.button("Send"):
+    if user_input:
+        # Retrieve security guidelines from S3
+        security_guidelines = get_security_guidelines()
+
+        # Modify prompt to include guidelines
+        prompt = f"""
+        User Query: {user_input}
+
+        Security Guidelines Reference:
+        {security_guidelines}
+        """
+        
+        # Append user input to LangChain memory
+        memory.save_context({"input": user_input}, {"output": ""})
+
+        # Get response from Claude 3.5
+        response = get_bedrock_response(prompt)
+
+        # Append response to memory
+        memory.chat_memory.add_user_message(user_input)
+        memory.chat_memory.add_ai_message(response)
+
+        # Update session state for chat history
+        st.session_state.messages.append(("user", user_input))
+        st.session_state.messages.append(("Claude 3.5", response))
+
+        # Display response with Markdown formatting
+        st.markdown(f"**🤖 Claude 3.5:**\n\n{response}")
+
+        # Clear input box after submission
+        st.experimental_rerun()
