@@ -19,11 +19,8 @@ st.set_page_config(page_title="AWS Bedrock Chatbot", page_icon="🤖", layout="w
 
 # Handle Unique Chat Sessions via URL Parameters
 query_params = st.query_params
-chat_id = query_params.get("chat_id")
-
-if chat_id is None:
-    chat_id = str(uuid.uuid4())  # Generate a new chat ID
-    st.query_params["chat_id"] = chat_id  # Set chat ID in the URL
+chat_id = query_params.get("chat_id", str(uuid.uuid4()))  # Generate if not present
+st.query_params["chat_id"] = chat_id  # Ensure URL has chat_id
 
 # Initialize Memory for the Chat Session
 if f"memory_{chat_id}" not in st.session_state:
@@ -76,16 +73,8 @@ with st.sidebar:
     new_chat_id = str(uuid.uuid4())
     new_chat_url = f"{st.get_option('server.baseUrlPath')}?chat_id={new_chat_id}"
 
-    # JavaScript to open a new chat window
-    new_chat_script = f"""
-    <script>
-        window.open("{new_chat_url}", "_blank");
-    </script>
-    """
-
-    # New Chat Button - Opens a New Window
-    if st.button("➕ New Chat"):
-        st.markdown(new_chat_script, unsafe_allow_html=True)
+    # Button to open a new chat window
+    st.link_button("➕ New Chat", new_chat_url, use_container_width=True)
 
     # Clear Chat for the Current Session
     if st.button("🗑️ Clear Chat"):
