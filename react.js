@@ -1,221 +1,109 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import "./App.css";
+import { Button, Form, Container, Row, Col } from "react-bootstrap";
 
-const API_URL = "http://localhost:5000/chat"; // Update with your backend API
-
-function App() {
+const Chatbot = () => {
+  const [chatId, setChatId] = useState(localStorage.getItem("chat_id") || generateChatId());
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+  const [userInput, setUserInput] = useState("");
   const [file, setFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [fileContent, setFileContent] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Send Message to Backend (AWS Bedrock)
-  const sendMessage = async () => {
-    if (!input.trim()) return;
+  // Generate a unique chat ID if none exists
+  const generateChatId = () => {
+    const id = Math.random().toString(36).substring(2, 10);
+    localStorage.setItem("chat_id", id);
+    return id;
+  };
 
-    const newMessages = [...messages, { role: "user", text: input }];
-    setMessages(newMessages);
-    setInput("");
-
-    const formData = new FormData();
-    formData.append("message", input);
-    if (file) formData.append("file", file);
-
-    try {
-      const response = await axios.post(API_URL, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const botReply = response.data.reply;
-      setMessages([...newMessages, { role: "bot", text: botReply }]);
-      setFile(null);
-    } catch (error) {
-      console.error("Error sending message:", error);
+  const handleFileUpload = (e) => {
+    const uploadedFile = e.target.files[0];
+    if (uploadedFile) {
+      setFile(uploadedFile);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFileContent(reader.result);
+      };
+      reader.readAsText(uploadedFile);
     }
   };
 
-  // Handle File Upload
-  const handleFileUpload = (event) => {
-    const uploadedFile = event.target.files[0];
-    if (uploadedFile) setFile(uploadedFile);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!userInput.trim()) return;
+
+    setLoading(true);
+
+    // Append user input to the messages
+    const newMessages = [...messages, { role: "user", content: userInput }];
+    setMessages(newMessages);
+    setUserInput("");
+
+    try {
+      const response = await axios.post("http://localhost:5000/chat", {
+        chat_id: chatId,
+        user_input: userInput,
+        file_content: fileContent,
+      });
+      const botResponse = response.data.message;
+      setMessages([...newMessages, { role: "bot", content: botResponse }]);
+    } catch (error) {
+      console.error("Error:", error);
+      setMessages([...newMessages, { role: "bot", content: "Error calling bot." }]);
+    }
+
+    setLoading(false);
   };
 
   return (
-    <div className="chat-container">
-      <div className="header">
-        <h2>Claude Chatbot</h2>
-        <button className="new-chat" onClick={() => setMessages([])}>New Chat</button>
-      </div>
-
-      <div className="chat-box">
-        {messages.map((msg, index) => (
-          <div key={index} className={msg.role === "user" ? "user-msg" : "bot-msg"}>
-            {msg.text}
+    <Container>
+      <Row>
+        <Col>
+          <h2>AWS Bedrock Chatbot 🤖</h2>
+          <h4>Chat ID: {chatId}</h4>
+          <div className="chat-history">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                style={{
+                  textAlign: msg.role === "user" ? "right" : "left",
+                  backgroundColor: msg.role === "user" ? "#dcf8c6" : "#f1f0f0",
+                  padding: "10px",
+                  borderRadius: "10px",
+                  margin: "5px 0",
+                }}
+              >
+                {msg.content}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="input-container">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          className="chat-input"
-        />
+          <Form onSubmit={handleSubmit}>
+            <Form.Group>
+              <Form.Control
+                type="text"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                placeholder="Type your message here..."
+              />
+            </Form.Group>
 
-        <label className="upload-btn" onClick={() => fileInputRef.current.click()}>
-          +
-        </label>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={handleFileUpload}
-        />
+            <Form.Group>
+              <Form.File
+                label="Upload File (txt, pdf, docx)"
+                onChange={handleFileUpload}
+              />
+            </Form.Group>
 
-        <button className="send-btn" onClick={sendMessage}>Send</button>
-      </div>
-    </div>
+            <Button variant="primary" type="submit" disabled={loading}>
+              {loading ? "Thinking..." : "Send"}
+            </Button>
+          </Form>
+        </Col>
+      </Row>
+    </Container>
   );
-}
+};
 
-export default App;
-
-.chat-container {
-  width: 400px;
-  margin: 50px auto;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-  background-color: #fff;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background-color: #0078ff;
-  color: white;
-}
-
-.new-chat {
-  background: white;
-  color: #0078ff;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.chat-box {
-  height: 300px;
-  overflow-y: auto;
-  padding: 10px;
-  background-color: #f9f9f9;
-}
-
-.user-msg {
-  background-color: #dcf8c6;
-  padding: 8px;
-  border-radius: 5px;
-  margin-bottom: 5px;
-  text-align: right;
-}
-
-.bot-msg {
-  background-color: #f1f0f0;
-  padding: 8px;
-  border-radius: 5px;
-  margin-bottom: 5px;
-  text-align: left;
-}
-
-.input-container {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background-color: white;
-}
-
-.chat-input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-.upload-btn {
-  width: 40px;
-  height: 40px;
-  background-color: #0078ff;
-  color: white;
-  text-align: center;
-  font-size: 20px;
-  line-height: 40px;
-  cursor: pointer;
-  margin-left: 5px;
-  border-radius: 50%;
-}
-
-.send-btn {
-  padding: 8px 15px;
-  margin-left: 5px;
-  background-color: #0078ff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-import gradio as gr
-import boto3
-import json
-
-AWS_REGION = "us-east-1"
-CLAUDE_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
-
-# Initialize AWS Bedrock Client
-bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
-
-def chat_with_claude(message, file=None):
-    file_content = ""
-    
-    if file:
-        file_content = file.read().decode("utf-8")
-
-    prompt = f"""
-    Uploaded File Content: {file_content}
-
-    User Query: {message}
-
-    Claude:
-    """
-
-    payload = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [{"role": "user", "content": prompt}],
-        "max_tokens": 500
-    }
-
-    response = bedrock_client.invoke_model(
-        modelId=CLAUDE_MODEL_ID,
-        contentType="application/json",
-        accept="application/json",
-        body=json.dumps(payload)
-    )
-
-    response_body = json.loads(response["body"].read().decode("utf-8"))
-    return response_body["content"]
-
-iface = gr.Interface(
-    fn=chat_with_claude,
-    inputs=["text", "file"],
-    outputs="text",
-    live=True
-)
-
-iface.launch()
+export default Chatbot;
