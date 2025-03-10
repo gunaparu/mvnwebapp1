@@ -71,12 +71,21 @@ def get_bedrock_response(prompt, chat_history, security_guidelines):
 # Sidebar Controls
 with st.sidebar:
     st.header("🤖 Chatbot Settings")
-    
-    # New Chat Button - Opens a New Window with a New Chat ID
+
+    # Generate a new unique chat ID
+    new_chat_id = str(uuid.uuid4())
+    new_chat_url = f"{st.get_option('server.baseUrlPath')}?chat_id={new_chat_id}"
+
+    # JavaScript to open a new chat window
+    js_script = f"""
+    <script>
+        window.open("{new_chat_url}", "_blank");
+    </script>
+    """
+
+    # New Chat Button - Opens a New Window
     if st.button("➕ New Chat"):
-        new_chat_id = str(uuid.uuid4())
-        st.query_params["chat_id"] = new_chat_id
-        st.rerun()
+        st.markdown(js_script, unsafe_allow_html=True)
 
     # Clear Chat for the Current Session
     if st.button("🗑️ Clear Chat"):
@@ -86,7 +95,7 @@ with st.sidebar:
 
 # Chat UI
 st.title("AWS Bedrock Chatbot 🤖")
-st.markdown(f"### 🆔 Chat ID: `{chat_id[:8]}` (You can switch back anytime)")
+st.markdown(f"### 🆔 Chat ID: `{chat_id[:8]}` (Each chat has a unique session)")
 
 # Chat History Display
 chat_container = st.container()
