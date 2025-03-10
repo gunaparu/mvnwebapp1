@@ -170,3 +170,52 @@ export default App;
   border-radius: 5px;
   cursor: pointer;
 }
+
+import gradio as gr
+import boto3
+import json
+
+AWS_REGION = "us-east-1"
+CLAUDE_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+
+# Initialize AWS Bedrock Client
+bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+
+def chat_with_claude(message, file=None):
+    file_content = ""
+    
+    if file:
+        file_content = file.read().decode("utf-8")
+
+    prompt = f"""
+    Uploaded File Content: {file_content}
+
+    User Query: {message}
+
+    Claude:
+    """
+
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 500
+    }
+
+    response = bedrock_client.invoke_model(
+        modelId=CLAUDE_MODEL_ID,
+        contentType="application/json",
+        accept="application/json",
+        body=json.dumps(payload)
+    )
+
+    response_body = json.loads(response["body"].read().decode("utf-8"))
+    return response_body["content"]
+
+iface = gr.Interface(
+    fn=chat_with_claude,
+    inputs=["text", "file"],
+    outputs="text",
+    live=True
+)
+
+iface.launch()
