@@ -5,10 +5,11 @@ def chat_with_bedrock(message, chat_history, file):
     response = f"Claude's response to: {message}"
     
     if file:
-        file_content = file.name  # Get uploaded file name (you can process it further)
-        response += f"\n\n(File uploaded: {file_content})"
+        response += f"\n\n(File uploaded: {file})"  # Display file name
     
-    chat_history.append((message, response))
+    chat_history.append({"role": "user", "content": message})
+    chat_history.append({"role": "assistant", "content": response})
+    
     return chat_history, ""
 
 # Function to reset chat
@@ -22,11 +23,11 @@ with gr.Blocks() as demo:
     with gr.Row():
         new_chat_btn = gr.Button("🆕 New Chat")  # New Chat button
     
-    chat_history = gr.Chatbot(label="Claude Chat")
+    chat_history = gr.Chatbot(label="Claude Chat", type="messages")  # Use OpenAI-style format
     
     with gr.Row():
         msg = gr.Textbox(placeholder="Type your message...", show_label=False)
-        file_upload = gr.File(label="", interactive=True, type="file", elem_id="hidden-upload")
+        file_upload = gr.File(label="", interactive=True, type="filepath", elem_id="hidden-upload")
         submit_btn = gr.Button("Send")
     
     new_chat_btn.click(reset_chat, inputs=[], outputs=[chat_history])  # Reset chat on button click
