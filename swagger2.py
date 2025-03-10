@@ -204,3 +204,95 @@ if st.session_state.get("submitted"):
 
     st.session_state["submitted"] = False
     st.rerun()
+
+import gradio as gr
+import boto3
+import json
+import uuid
+import PyPDF2
+import docx
+
+# AWS Configuration
+AWS_REGION = "us-east-1"
+CLAUDE_MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+
+# Initialize AWS Bedrock Client
+bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+
+# Function to Extract Text from Uploaded Files
+def extract_text_from_file(file):
+    if file is None:
+        return ""
+
+    file_extension = file.name.split(".")[-1].lower()
+
+    if file_extension == "txt":
+        return file.read().decode("utf-8")
+    elif file_extension == "pdf":
+        reader = PyPDF2.PdfReader(file)
+        return " ".join([page.extract_text() for page in reader.pages if page.extract_text()])
+    elif file_extension == "docx":
+        doc = docx.Document(file)
+        return " ".join([para.text for para in doc.paragraphs])
+    else:
+        return "Unsupported file type."
+
+# Function to Call AWS Bedrock (Claude 3.5) with Chat & File Context
+def get_bedrock_response(chat_history, user_input, uploaded_file):
+    file_content = extract_text_from_file(uploaded_file) if uploaded_file else ""
+
+    full_prompt = f"""
+    Previous Conversation: {chat_history}
+
+    User Query: {user_input}
+
+    Uploaded File Context:
+    {file_content}
+
+    Claude:
+    """
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": [{"role": "user", "content": full_prompt}],
+        "max_tokens": 500
+    }
+    
+    try:
+        response = bedrock_client.invoke_model(
+            modelId=CLAUDE_MODEL_ID,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps(payload)
+        )
+        response_body = json.loads(response["body"].read().decode("utf-8"))
+        
+        if isinstance(response_body.get("content"), list):
+            return " ".join([item.get("text", "") for item in response_body["content"] if isinstance(item, dict)])
+        elif isinstance(response_body.get("content"), str):
+            return response_body["content"]
+        else:
+            return "Error: Unexpected response format from Claude."
+    except Exception as e:
+        return f"Error calling Claude 3.5: {e}"
+
+# Gradio Chatbot Interface
+def chat_interface(chat_history, user_input, uploaded_file):
+    response = get_bedrock_response(chat_history, user_input, uploaded_file)
+    chat_history.append((user_input, response))
+    return chat_history, None  # Clears input field after sending
+
+# Gradio App Layout
+with gr.Blocks() as app:
+    gr.Markdown("### 🤖 AWS Bedrock Chatbot with Claude 3.5")
+
+    chatbot = gr.Chatbot(label="AWS Bedrock Claude 3.5 Chatbot")
+    with gr.Row():
+        user_input = gr.Textbox(show_label=False, placeholder="Type your message here...", scale=8)
+        file_upload = gr.File(label="📎", file_types=[".txt", ".pdf", ".docx"], scale=1)
+        send_button = gr.Button("Send", scale=1)
+
+    send_button.click(chat_interface, inputs=[chatbot, user_input, file_upload], outputs=[chatbot, user_input])
+    user_input.submit(chat_interface, inputs=[chatbot, user_input, file_upload], outputs=[chatbot, user_input])
+
+# Run the App
+app.launch()
