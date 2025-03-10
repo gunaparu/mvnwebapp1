@@ -47,23 +47,43 @@ def extract_text_from_file(uploaded_file):
     else:
         return "Unsupported file type."
 
-# Function to Call AWS Bedrock (Claude 3.5) with File Context
+# Function to Fetch Security Guidelines from S3
+def get_security_guidelines():
+    try:
+        response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=SECURITY_GUIDELINES_FILE)
+        return response["Body"].read().decode("utf-8")
+    except Exception as e:
+        return f"Error fetching security guidelines: {e}"
+
+# Function to Call AWS Bedrock (Claude 3.5) with Security Guidelines & File Context
 def get_bedrock_response(prompt, chat_history, file_content):
+    # Fetch security guidelines from S3
+    security_guidelines = get_security_guidelines()
+
+    # Combine chat history, security guidelines, and file content
     full_prompt = f"""
     Previous Conversation: {chat_history}
     
+    Security Guidelines:
+    {security_guidelines}
+
+    {f"Uploaded File Content:\n{file_content}" if file_content else ""}
+
     User Query: {prompt}
-
-    Uploaded File Context:
-    {file_content}
-
+    
     Claude:
     """
+    
     payload = {
         "anthropic_version": "bedrock-2023-05-31",
         "messages": [{"role": "user", "content": full_prompt}],
         "max_tokens": 500
     }
+
+    # DEBUG: Show Final Prompt Sent to Claude
+    st.markdown("### 📝 Claude's Final Prompt:")
+    st.json(payload)
+
     try:
         response = bedrock_client.invoke_model(
             modelId=CLAUDE_MODEL_ID,
@@ -82,29 +102,29 @@ def get_bedrock_response(prompt, chat_history, file_content):
     except Exception as e:
         return f"Error calling Claude 3.5: {e}"
 
-# Sidebar Controls
-with st.sidebar:
-    st.header("🤖 Chatbot Settings")
-
-    # File Upload in Sidebar
-    uploaded_file = st.file_uploader("📂 Upload File (TXT, PDF, DOCX)", type=["txt", "pdf", "docx"])
-
+# Handle File Upload (Only Chat Input)
+def handle_uploaded_file(uploaded_file, chat_id):
     if uploaded_file:
         extracted_text = extract_text_from_file(uploaded_file)
-        st.session_state[f"uploaded_file_content_{chat_id}"] = extracted_text
-        st.success(f"📄 File `{uploaded_file.name}` uploaded successfully!")
+        if extracted_text:
+            st.session_state[f"uploaded_file_content_{chat_id}"] = extracted_text
+            st.success(f"📄 `{uploaded_file.name}` uploaded successfully!")
 
-    # New Chat Button
-    new_chat_id = str(uuid.uuid4())
-    new_chat_url = f"{st.get_option('server.baseUrlPath')}?chat_id={new_chat_id}"
-    st.link_button("➕ New Chat", new_chat_url, use_container_width=True)
+# **New Feature: Chat Input with File Upload Button**
+col1, col2 = st.columns([8, 1])  
 
-    # Clear Chat
-    if st.button("🗑️ Clear Chat"):
-        st.session_state[f"memory_{chat_id}"].clear()
-        st.session_state[f"messages_{chat_id}"] = []
-        st.session_state[f"uploaded_file_content_{chat_id}"] = ""
-        st.rerun()
+with col1:
+    user_input = st.text_input("Type your message here...", key="input", on_change=lambda: st.session_state.update({"submitted": True}))
+
+with col2:
+    uploaded_file_chat = st.file_uploader("➕", type=["txt", "pdf", "docx"], label_visibility="collapsed")
+
+# Process Chat Input File Upload
+if uploaded_file_chat:
+    handle_uploaded_file(uploaded_file_chat, chat_id)
+
+# Fetch the latest file content before sending to Claude
+file_content = st.session_state.get(f"uploaded_file_content_{chat_id}", "")
 
 # Chat UI
 st.title("AWS Bedrock Chatbot 🤖")
@@ -119,49 +139,12 @@ with chat_container:
         else:
             st.markdown(f'<div style="background-color:#f1f0f0;padding:10px;border-radius:10px;margin:5px 0;">{content}</div>', unsafe_allow_html=True)
 
-# **New Feature: Chat Input with File Upload Button**
-col1, col2 = st.columns([8, 1])  
-
-with col1:
-    user_input = st.text_input("Type your message here...", key="input", on_change=lambda: st.session_state.update({"submitted": True}))
-
-with col2:
-    uploaded_file_chat = st.file_uploader("➕", type=["txt", "pdf", "docx"], label_visibility="collapsed")
-
-# Process File Upload Beside Chat
-if uploaded_file_chat:
-    extracted_text = extract_text_from_file(uploaded_file_chat)
-    st.session_state[f"uploaded_file_content_{chat_id}"] = extracted_text
-    st.success(f"📄 `{uploaded_file_chat.name}` uploaded!")
-
-# Quick Action Buttons
-col1, col2, col3 = st.columns([1, 1, 1])
-
-with col1:
-    search_button = st.button("🌍 Search")
-
-with col2:
-    reason_button = st.button("💡 Reason")
-
-with col3:
-    voice_input_button = st.button("🎙️ Voice Input")
-
-# Handle Button Clicks
-if search_button:
-    st.write("🔍 Searching relevant data...")
-if reason_button:
-    st.write("💡 Providing explanation...")
-if voice_input_button:
-    st.write("🎙️ Voice input coming soon...")
-
 # Process Chat Input
 if st.session_state.get("submitted"):
     if user_input.strip():
         st.session_state[f"messages_{chat_id}"].append(("user", user_input))
 
         past_context = st.session_state[f"memory_{chat_id}"].load_memory_variables({}).get("history", "")
-
-        file_content = st.session_state[f"uploaded_file_content_{chat_id}"]
 
         # Get AI Response
         with st.spinner("Thinking..."):
