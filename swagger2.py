@@ -1,3 +1,5 @@
+st.markdown('<style>.file-uploader{visibility:hidden;height:0;}.upload-btn{display:inline-block;width:50px;height:50px;background-color:#0078ff;border-radius:50%;text-align:center;font-size:30px;color:white;line-height:50px;cursor:pointer;}</style>', unsafe_allow_html=True)
+
 st.markdown(
     """
     <style>
