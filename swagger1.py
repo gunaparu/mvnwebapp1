@@ -36,7 +36,7 @@ def get_security_guidelines():
     except Exception as e:
         return f"Error fetching security guidelines: {e}"
 
-# Function to Call AWS Bedrock (Claude 3.5)
+# Function to Call AWS Bedrock (Claude 3.5) with Proper Response Parsing
 def get_bedrock_response(prompt, chat_history, security_guidelines):
     full_prompt = f"""
     Previous Conversation: {chat_history}
@@ -61,7 +61,15 @@ def get_bedrock_response(prompt, chat_history, security_guidelines):
             body=json.dumps(payload)
         )
         response_body = json.loads(response["body"].read().decode("utf-8"))
-        return response_body.get("content", ["Error: No response"])[0]
+
+        # ✅ Fix: Ensure we extract text correctly
+        if isinstance(response_body.get("content"), list):
+            return " ".join([item.get("text", "") for item in response_body["content"] if isinstance(item, dict)])
+        elif isinstance(response_body.get("content"), str):
+            return response_body["content"]
+        else:
+            return "Error: Unexpected response format from Claude."
+
     except Exception as e:
         return f"Error calling Claude 3.5: {e}"
 
