@@ -19,15 +19,15 @@ def reset_chat():
 # Gradio UI
 with gr.Blocks() as demo:
     with gr.Row():
-        gr.Markdown("# 🤖 AWS Bedrock Claude Chatbot", scale=8)
-        new_chat_btn = gr.Button("🆕 New Chat", scale=2, size="sm")  # Move New Chat to top right
+        gr.Markdown("# 🤖 AWS Bedrock Claude Chatbot")  # ❌ Removed scale=8
+        new_chat_btn = gr.Button("🆕 New Chat", size="sm")  # New Chat on top right
 
     chat_history = gr.Chatbot(label="Claude Chat", type="messages")  # OpenAI-style format
     
     with gr.Row():
         msg = gr.Textbox(placeholder="Type your message...", show_label=False, scale=7)
         upload_btn = gr.Button("+", scale=1, size="sm")  # "+" Upload Button
-        file_upload = gr.File(label="", type="filepath", scale=0, visible=False)  # Hidden File Upload
+        file_upload = gr.File(label="", type="filepath", visible=False)  # Hidden File Upload
         submit_btn = gr.Button("Send", scale=1, size="sm")  # Smaller Send button
     
     new_chat_btn.click(reset_chat, inputs=[], outputs=[chat_history])  # Reset chat on button click
