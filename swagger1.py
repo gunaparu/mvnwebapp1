@@ -77,7 +77,7 @@ with st.sidebar:
     new_chat_url = f"{st.get_option('server.baseUrlPath')}?chat_id={new_chat_id}"
 
     # JavaScript to open a new chat window
-    js_script = f"""
+    new_chat_script = f"""
     <script>
         window.open("{new_chat_url}", "_blank");
     </script>
@@ -85,7 +85,7 @@ with st.sidebar:
 
     # New Chat Button - Opens a New Window
     if st.button("➕ New Chat"):
-        st.markdown(js_script, unsafe_allow_html=True)
+        st.markdown(new_chat_script, unsafe_allow_html=True)
 
     # Clear Chat for the Current Session
     if st.button("🗑️ Clear Chat"):
