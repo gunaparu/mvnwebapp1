@@ -1,3 +1,32 @@
+st.markdown(
+    """
+    <style>
+        div[data-testid="stFileUploader"] > label {
+            display: none;
+        }
+        div[data-testid="stFileUploader"] > div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 50px;
+            height: 50px;
+            background-color: #ddd;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        div[data-testid="stFileUploader"] > div::before {
+            content: "+";
+            font-weight: bold;
+            color: black;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+
 import streamlit as st
 import boto3
 import json
