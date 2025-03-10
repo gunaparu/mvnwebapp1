@@ -1,3 +1,14 @@
+st.markdown("""<style>div[data-testid="stFileUploadDropzone"] { visibility: hidden; height: 0; }</style>""", unsafe_allow_html=True)
+
+# Display the custom upload button
+st.markdown("<label class='upload-btn' style='display:inline-block;width:50px;height:50px;background:#0078ff;border-radius:50%;text-align:center;font-size:30px;color:white;line-height:50px;cursor:pointer;user-select:none;'>+</label>", unsafe_allow_html=True)
+
+# Actual file uploader (hidden but functional)
+uploaded_file = st.file_uploader("Upload file", type=["txt", "pdf", "docx"], key="file_uploader", label_visibility="hidden")
+
+if uploaded_file:
+    st.success("File uploaded successfully!")
+
 st.markdown("""<style>div[data-testid="stFileUploadDropzone"] { visibility: hidden; height: 0; } .upload-btn { display: inline-block; width: 50px; height: 50px; background-color: #0078ff; border-radius: 50%; text-align: center; font-size: 30px; color: white; line-height: 50px; cursor: pointer; user-select: none; }</style><script>function triggerFileUpload() { document.querySelector('input[type=file]').click(); }</script><label class="upload-btn" onclick="triggerFileUpload()">+</label>""", unsafe_allow_html=True)
 
 st.markdown("""<style>div[data-testid="stFileUploadDropzone"] { visibility: hidden; height: 0; } .upload-btn { display: inline-block; width: 50px; height: 50px; background-color: #0078ff; border-radius: 50%; text-align: center; font-size: 30px; color: white; line-height: 50px; cursor: pointer; user-select: none; }</style><label for='file-upload' class='upload-btn'>+</label>""", unsafe_allow_html=True)
