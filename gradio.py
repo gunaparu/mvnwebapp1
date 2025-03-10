@@ -1,6 +1,6 @@
 import gradio as gr
 
-# Function to process chat and file uploads
+# Function to handle chat and file uploads
 def chat_with_bedrock(message, chat_history, file):
     response = f"Claude's response to: {message}"
     
@@ -34,7 +34,7 @@ with gr.Blocks() as demo:
     submit_btn.click(chat_with_bedrock, inputs=[msg, chat_history, file_upload], outputs=[chat_history, msg])
 
     # Hide file upload input and show only "+"
-    gr.Markdown(
+    gr.HTML(
         """
         <style>
             #hidden-upload { display: none !important; }  /* Hide file upload */
@@ -53,8 +53,7 @@ with gr.Blocks() as demo:
                 line-height: 35px;
             }
         </style>
-        """,
-        unsafe_allow_html=True
+        """
     )
 
 demo.launch()
