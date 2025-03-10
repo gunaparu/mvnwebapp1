@@ -1,3 +1,5 @@
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+
 st.markdown("""<style>div[data-testid="stFileUploadDropzone"] { visibility: hidden; height: 0; }</style>""", unsafe_allow_html=True)
 
 # Display the custom upload button
