@@ -119,3 +119,15 @@ To build CloudGuardian efficiently, we reused several AWS-native services and to
 (Reference: Boto3 Docs)
 
 In addition, we followed best practices from the AWS Well-Architected Framework to ensure our solution was secure, reliable, and scalable.
+
+CloudGuardian is designed with modularity and scalability in mind, making it easy for other teams or projects to adopt and extend. Key components like the Lambda functions, AI risk scoring logic using Bedrock Claude, and EventBridge-based automation workflows can be reused across different AWS environments with minimal adjustments.
+
+Security teams can quickly adapt CloudGuardian by:
+	•	Plugging it into their own CloudTrail logs stored in S3
+	•	Reusing the AI scoring logic to classify security events in their context
+	•	Leveraging the serverless framework to scale across multiple AWS accounts
+	•	Extending the automation layer to add custom remediation actions
+	•	Integrating it with their own alerting tools via SNS or EventBridge
+
+Because it’s built entirely on AWS-native services, CloudGuardian can be reused without needing third-party tools, making it ideal for teams looking to enhance their cloud security posture with minimal setup.
+
