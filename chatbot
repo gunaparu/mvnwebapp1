@@ -108,3 +108,14 @@ Because it’s built entirely using AWS-native services, CloudGuardian can be in
 
 Additionally, the AI and risk scoring logic is customizable, allowing teams to tailor it to their own threat models, while the visual dashboards provide a plug-and-play solution for real-time security insights.
 
+
+To build CloudGuardian efficiently, we reused several AWS-native services and tools that allowed us to focus on innovation and automation.
+	•	We used AWS Bedrock’s Claude 3.5 Sonnet model for AI-powered risk scoring and threat classification. Leveraging Bedrock helped us avoid building custom models while still enabling accurate, context-aware threat analysis.
+(Reference: AWS Bedrock)
+	•	For automation, we reused AWS Lambda function templates for scheduled log processing and S3 event triggers. This made it easy to set up serverless workflows for continuous monitoring.
+(Reference: AWS Serverless Examples)
+	•	We worked with the standard CloudTrail log format for parsing security events, which ensured compatibility across all AWS services without needing custom data ingestion logic.
+	•	We also reused existing Boto3 SDK scripts to interact with key services like S3, DynamoDB, SNS, and EventBridge, which sped up development and ensured consistent integration.
+(Reference: Boto3 Docs)
+
+In addition, we followed best practices from the AWS Well-Architected Framework to ensure our solution was secure, reliable, and scalable.
