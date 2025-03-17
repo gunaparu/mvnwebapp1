@@ -99,3 +99,12 @@ Every action CloudGuardian takes — whether it’s flagging an event, sending a
 	So, CloudGuardian doesn’t just help us detect — it helps us act, at scale, with speed and clarity.
 That’s a game-changer in cloud security.”
 
+CloudGuardian is designed with reusability at its core.
+Its modular, serverless architecture enables easy deployment across multiple AWS accounts and environments, without major reconfiguration.
+
+All core components — including Lambda functions, AI-driven risk scoring (Bedrock Claude), data storage (DynamoDB), dashboards (QuickSight), and EventBridge workflows — can be packaged and reused by other teams needing cloud security monitoring.
+
+Because it’s built entirely using AWS-native services, CloudGuardian can be integrated with any AWS setup — making it adaptable for different use cases like compliance auditing, security posture management, or automated remediation.
+
+Additionally, the AI and risk scoring logic is customizable, allowing teams to tailor it to their own threat models, while the visual dashboards provide a plug-and-play solution for real-time security insights.
+
