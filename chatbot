@@ -50,3 +50,16 @@ What to Say:
 	•	Scalability: It runs across multiple AWS accounts without extra effort.
 	•	Audit-ready: Every action is logged for transparency and compliance.
 CloudGuardian doesn’t just detect — it helps us act, at scale.”
+
+
+CloudGuardian automates threat detection using AI, which means we no longer have to sift through millions of log entries manually. Instead, logs are automatically analyzed using Claude 3.5 from AWS Bedrock, which assigns a risk score based on context — like who did what, when, and whether it’s unusual behavior.
+
+Then comes real-time alerting. If something critical is detected — say an unauthorized access to a sensitive S3 bucket — CloudGuardian immediately sends an alert via AWS SNS, so the security team can act right away, not hours later.
+
+Because it’s built entirely using serverless AWS services like Lambda, EventBridge, and DynamoDB, it scales effortlessly across multiple AWS accounts — no matter how large or complex the environment.
+
+Another key part is audit and compliance. Every decision CloudGuardian makes — whether it’s flagging a threat, scoring it, or triggering a response — is logged and stored, helping teams with post-incident analysis and audit readiness.
+
+Ultimately, it’s designed to reduce manual effort, prioritize threats intelligently, and shrink response time from hours to seconds — enabling teams to stay ahead of potential breaches.”
+
+
