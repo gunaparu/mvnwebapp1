@@ -1,33 +1,53 @@
 import boto3
+from datetime import datetime, timedelta
 
-# Function to get total S3 storage in GB
-def get_s3_size(session):
-    s3_client = session.client("s3")
-    total_size = 0
+def get_s3_bucket_sizes(session):
+    s3_client = session.client('s3')
+    cw_client = session.client('cloudwatch', region_name='us-east-1')
+
+    total_bytes = 0
+    bucket_sizes = {}
 
     try:
-        response = s3_client.list_buckets()
-        for bucket in response["Buckets"]:
-            bucket_name = bucket["Name"]
+        buckets = s3_client.list_buckets()['Buckets']
+        for bucket in buckets:
+            bucket_name = bucket['Name']
             try:
-                # Paginate through all objects in the bucket
-                paginator = s3_client.get_paginator("list_objects_v2")
-                for page in paginator.paginate(Bucket=bucket_name):
-                    if "Contents" in page:
-                        for obj in page["Contents"]:
-                            total_size += obj["Size"]
+                response = cw_client.get_metric_statistics(
+                    Namespace='AWS/S3',
+                    MetricName='BucketSizeBytes',
+                    Dimensions=[
+                        {'Name': 'BucketName', 'Value': bucket_name},
+                        {'Name': 'StorageType', 'Value': 'StandardStorage'}
+                    ],
+                    StartTime=datetime.utcnow() - timedelta(days=2),
+                    EndTime=datetime.utcnow(),
+                    Period=86400,
+                    Statistics=['Average']
+                )
+
+                datapoints = response.get('Datapoints', [])
+                if datapoints:
+                    size_bytes = datapoints[-1]['Average']
+                    bucket_sizes[bucket_name] = size_bytes / (1024 ** 3)  # Convert to GB
+                    total_bytes += size_bytes
+
             except Exception as e:
-                print(f"Error accessing bucket {bucket_name}: {e}")
+                print(f"Error fetching size for bucket {bucket_name}: {e}")
                 continue
 
-        # Convert bytes to GB
-        return total_size / (1024 ** 3)
+        total_gb = total_bytes / (1024 ** 3)
+        return bucket_sizes, total_gb
 
     except Exception as e:
-        print(f"Failed to get S3 bucket sizes: {e}")
-        return 0
+        print(f"Error listing buckets: {e}")
+        return {}, 0
 
 # Example usage
 session = boto3.Session(region_name="us-east-1")
-size_gb = get_s3_size(session)
-print(f"Total S3 storage used: {size_gb:.2f} GB")
+bucket_sizes, total_storage_gb = get_s3_bucket_sizes(session)
+
+for bucket, size in bucket_sizes.items():
+    print(f"Bucket: {bucket}, Size: {size:.2f} GB")
+
+print(f"\nTotal Storage Used: {total_storage_gb:.2f} GB")
