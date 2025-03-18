@@ -131,3 +131,23 @@ Security teams can quickly adapt CloudGuardian by:
 
 Because it’s built entirely on AWS-native services, CloudGuardian can be reused without needing third-party tools, making it ideal for teams looking to enhance their cloud security posture with minimal setup.
 
+Hi Ramesh,
+
+I have gathered the required information as per our previous discussion regarding the FSD Cyera integration. We also had an internal discussion to identify the accounts to be onboarded in Phase 1. Below is the list of accounts selected for onboarding to the Cyera SaaS model:
+
+List of Accounts:
+[Insert Table/List Here]
+
+These accounts were selected based on our earlier conversation, with a focus on Non-Predicted Internal and Restricted accounts. Notably, two Production accounts are included in the list:
+	1.	Lgbs-Connect-PublicEdge-Prod – We aim to verify if any sensitive data exists in this account, as it operates in a public-facing environment.
+	2.	Lgbs-Account-Review-Self-Service-… – Although this is considered a UAT environment, we would like to check for any discrepancies against our security guidelines.
+
+Additionally, we would like to confirm with you if the following accounts can also be onboarded:
+	•	Lgbs-Pinning-NonPred
+	•	Lgbs-Sunrise-DEV
+
+Please share your suggestions or comments regarding the selected accounts for Phase 1 onboarding.
+
+Regards,
+T Gunasekhar
+
