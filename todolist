@@ -1,0 +1,48 @@
+For the Senior Cloud Security Engineer role at Fanatics, focus on these key areas based on the job description:
+
+⸻
+
+1️⃣ Cloud Security & Infrastructure Security
+	•	AWS Security Best Practices: IAM, SCPs, GuardDuty, Security Hub, CloudTrail, Config
+	•	Infrastructure Security: EC2, S3, RDS, EKS, DynamoDB security
+	•	Network Security: VPC Security, NACLs, Security Groups, VPN, PrivateLink
+	•	KMS, Secrets Manager, Certificate Management
+
+2️⃣ Infrastructure as Code (IaC) & Automation
+	•	Terraform Security Best Practices
+	•	IaC Scanning Tools: Checkov, Tfsec, AWS Config, Conftest
+	•	Automating Security Remediation with AWS Lambda & EventBridge
+
+3️⃣ Cloud Security Posture Management (CSPM) & Compliance
+	•	ISO 27001, PCI DSS, SOC2 compliance in AWS
+	•	AWS Security Hub, Config Rules for Compliance Monitoring
+	•	Vulnerability Management & Automated Scanning (e.g., AWS Inspector, Nessus, Qualys)
+
+4️⃣ Secure DevOps & CI/CD Security
+	•	AWS CodePipeline, CodeBuild Security
+	•	Container Security (EKS, Docker, Kubernetes Security)
+	•	SAST & DAST (e.g., Snyk, SonarQube, OWASP ZAP)
+
+5️⃣ Threat Detection & Incident Response
+	•	AWS GuardDuty, Detective, Security Hub
+	•	SIEM & Log Analysis (Splunk, ELK, CloudWatch Logs)
+	•	SOC Collaboration & Incident Response Plans
+
+6️⃣ Programming & Scripting (Automation)
+	•	Python & Go (focus on security automation, AWS SDK, Boto3)
+	•	AWS Boto3 Scripting for IAM, Security Checks
+	•	Log Parsing & Automation Scripts
+
+⸻
+
+Interview Prep Strategy
+	1.	Hands-on Labs: Practice setting up IAM, KMS, SCPs, GuardDuty, WAF, and Terraform Security.
+	2.	AWS Security Specialty Topics: Revise threat detection, compliance, encryption, and IAM hardening.
+	3.	Mock Interview Practice: Prepare scenario-based questions on incident response, compliance, and automation.
+	4.	Terraform & Python Use Cases: Be ready to explain how you’ve automated security tasks.
+
+⸻
+
+Since you’ve cleared AWS Security Specialty, you already have a strong foundation. Focus on Terraform security, AWS threat detection, compliance, and automation to strengthen your position.
+
+Want me to prepare some mock interview questions for this role?
