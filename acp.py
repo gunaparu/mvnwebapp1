@@ -1,10 +1,18 @@
 import boto3
 import json
+import os
 from collections import defaultdict
+from datetime import datetime
 
 org_client = boto3.client('organizations')
 MAX_CHAR_LIMIT = 5120
 MAX_SCP_FILES = 5
+
+OUTPUT_DIR = "output"
+SCP_DIR = os.path.join(OUTPUT_DIR, "scps")
+REPORT_DIR = os.path.join(OUTPUT_DIR, "reports")
+os.makedirs(SCP_DIR, exist_ok=True)
+os.makedirs(REPORT_DIR, exist_ok=True)
 
 def fetch_all_scp_policies():
     paginator = org_client.get_paginator('list_policies')
@@ -48,119 +56,101 @@ def split_into_limited_scp_groups(statements, max_files=MAX_SCP_FILES):
             raise ValueError("Statements exceed space for 5 SCPs. Manual cleanup needed.")
     return groups
 
+def analyze_policy_issues(policies):
+    issues = []
+    for policy in policies:
+        policy_id = policy['Id']
+        policy_name = policy['Name']
+        description = policy.get("Description", "")
+        create_date = policy.get("CreateDate", "")
+        detail = describe_policy(policy_id)
+        content = json.loads(detail['Content'])
+        statements = content.get("Statement", [])
+        if isinstance(statements, dict):
+            statements = [statements]
+
+        if not statements:
+            issues.append(f"Policy '{policy_name}' ({policy_id}) has no statements.")
+            continue
+
+        seen_actions = set()
+        for stmt in statements:
+            actions = stmt.get("Action", [])
+            if isinstance(actions, str):
+                actions = [actions]
+            for act in actions:
+                if act in seen_actions:
+                    issues.append(f"Redundant action '{act}' found in policy '{policy_name}' ({policy_id})")
+                else:
+                    seen_actions.add(act)
+
+            if stmt.get("Effect") != "Deny":
+                issues.append(f"Policy '{policy_name}' ({policy_id}) has a non-Deny effect, which is discouraged.")
+
+            if not stmt.get("Condition") and "*" in actions:
+                issues.append(f"Policy '{policy_name}' ({policy_id}) has wildcard Action without condition.")
+
+        char_len = len(json.dumps(content))
+        if char_len > 5000:
+            issues.append(f"Policy '{policy_name}' ({policy_id}) is nearing character size limit ({char_len}/5120)")
+
+    return issues
+
 def save_scp_files(scp_groups):
     for idx, group in enumerate(scp_groups, 1):
         policy = {
             "Version": "2012-10-17",
             "Statement": group
         }
-        with open(f"scp_merged_{idx}.json", "w") as f:
+        with open(os.path.join(SCP_DIR, f"scp_merged_{idx}.json"), "w") as f:
             json.dump(policy, f, indent=2)
 
-def generate_summary(scp_groups):
-    with open("scp_merged_summary.txt", "w") as f:
-        for idx, group in enumerate(scp_groups, 1):
-            f.write(f"\nSCP #{idx}\n")
-            f.write("=" * 60 + "\n")
-            total_chars = len(json.dumps(group))
-            f.write(f"Total Statements: {len(group)}\n")
-            f.write(f"Approx. Characters: {total_chars} / {MAX_CHAR_LIMIT}\n\n")
-            for stmt in group:
-                sid = stmt.get("Sid", "(no Sid)")
-                effect = stmt.get("Effect", "N/A")
-                actions = stmt.get("Action", [])
-                actions = actions if isinstance(actions, list) else [actions]
-                resources = stmt.get("Resource", [])
-                resources = resources if isinstance(resources, list) else [resources]
-                condition = stmt.get("Condition", {})
+def save_summary_file(all_statements):
+    summary_policy = {
+        "Version": "2012-10-17",
+        "Statement": all_statements
+    }
+    with open(os.path.join(SCP_DIR, "scp_merged_summary.json"), "w") as f:
+        json.dump(summary_policy, f, indent=2)
 
-                f.write(f"- Sid: {sid}\n")
-                f.write(f"  Effect: {effect}\n")
-                f.write(f"  Actions: {', '.join(actions)}\n")
-                f.write(f"  Resources: {', '.join(resources)}\n")
-                if condition:
-                    f.write(f"  Condition: {json.dumps(condition)}\n")
-                f.write("\n")
-
-def generate_scp_issues(policies):
-    with open("scp_issues.txt", "w") as f:
-        f.write("SCP Issues Summary\n")
-        f.write("=" * 60 + "\n")
-
-        for policy in policies:
-            policy_id = policy['Id']
-            name = policy['Name']
-            description = policy.get('Description', 'No description')
-
-            detail = describe_policy(policy_id)
-            content = json.loads(detail['Content'])
-            statements = content.get("Statement", [])
-            if isinstance(statements, dict):
-                statements = [statements]
-
-            char_count = len(json.dumps(content))
-            f.write(f"\nPolicy Name: {name}\n")
-            f.write(f"Policy ID: {policy_id}\n")
-            f.write(f"Description: {description}\n")
-            f.write(f"Characters Used: {char_count} / 5120\n")
-            f.write(f"Number of Statements: {len(statements)}\n")
-            f.write("Issues:\n")
-
-            if char_count > 4900:
-                f.write(" - [!] Policy size is near the limit\n")
-
-            actions_seen = set()
-            for stmt in statements:
-                effect = stmt.get("Effect", "")
-                actions = stmt.get("Action", [])
-                actions = actions if isinstance(actions, list) else [actions]
-                condition = stmt.get("Condition", {})
-
-                for act in actions:
-                    if act in actions_seen:
-                        f.write(f" - [!] Redundant action detected: {act}\n")
-                    actions_seen.add(act)
-
-                if condition == {}:
-                    f.write(" - [!] Empty condition block found\n")
-
-                if stmt.get("Resource") == "*" and actions == ["*"]:
-                    f.write(" - [!] Overly permissive: Effect=Allow/Deny on all actions and resources\n")
-
-            f.write("-" * 60 + "\n")
+def save_issues_file(issues):
+    with open(os.path.join(REPORT_DIR, "scp_issues.txt"), "w") as f:
+        for issue in issues:
+            f.write(issue + "\n")
 
 def main():
-    print("Fetching SCP policies...")
+    print("Fetching all SCPs...")
     policies = fetch_all_scp_policies()
-
     all_statements = []
+
+    print("Describing and collecting statements...")
     for policy in policies:
         detail = describe_policy(policy['Id'])
         content = json.loads(detail['Content'])
         statements = content.get("Statement", [])
-        if isinstance(statements, dict):  # if Statement is a single dict
+        if isinstance(statements, dict):
             statements = [statements]
         all_statements.extend(statements)
 
-    print("Merging and de-duplicating policy statements...")
+    print("Analyzing policy issues...")
+    issues = analyze_policy_issues(policies)
+    save_issues_file(issues)
+
+    print("Merging unique statements...")
     merged = merge_statements_unique(all_statements)
 
-    print("Splitting into ≤5 deployable SCPs...")
+    print("Saving SCP summary file...")
+    save_summary_file(merged)
+
+    print("Splitting into 5 deployable SCPs...")
     scp_groups = split_into_limited_scp_groups(merged)
 
-    print("Saving SCP files...")
+    print("Saving merged SCP files...")
     save_scp_files(scp_groups)
 
-    print("Generating SCP summary...")
-    generate_summary(scp_groups)
-
-    print("Analyzing policy issues...")
-    generate_scp_issues(policies)
-
-    print("\nDone! The following files are generated:")
-    print(" - scp_merged_1.json to scp_merged_5.json")
-    print(" - scp_merged_summary.txt")
-    print(" - scp_issues.txt")
+    print("\nDone!")
+    print(f"→ SCPs stored in:      {SCP_DIR}")
+    print(f"→ Issues report saved: {os.path.join(REPORT_DIR, 'scp_issues.txt')}")
 
 if __name__ == "__main__":
     main()
