@@ -1117,6 +1117,3 @@ for log in cloudtrail_events:
 
 print(f"Total IAM logs found: {len(iam_logs)}")
 
-Hi Ravi,
-Good morning — it’s great to connect!
-I’m Gunasekhar, part of the Cloud Security team here at Experian. I’ve been primarily working on AWS security, IAM, and automation, and recently exploring AI-based threat detection using services like Bedrock and GuardDuty. I hold a PhD in Computer Science and have around 3.5 years of experience in cloud security. Currently, my focus is on automating security operations and strengthening our cloud posture, particularly around identity and data protection in multi-account environments.
