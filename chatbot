@@ -1,0 +1,39 @@
+1. Redundant Policies
+	•	Multiple SCPs with overlapping rules across accounts
+	•	Increases complexity and policy maintenance effort
+
+2. Unattached SCPs
+	•	SCPs exist but are not attached to root or member accounts
+	•	These policies are ineffective and unused
+
+3. Overly Permissive Access
+	•	Some SCPs allow broad access (e.g., "Action": "*"), violating least privilege principle
+	•	Risk of privilege misuse or lateral movement
+
+4. Missing Explicit Deny for Sensitive Services
+	•	No restrictions on critical services like IAM, KMS, or Organizations
+	•	Increases risk of accidental or unauthorized changes
+
+5. Misaligned Deployment Scope
+	•	SCPs applied at root level with rules only relevant to a few accounts
+	•	Causes unnecessary restrictions across the org
+
+6. Inconsistent Naming Conventions
+	•	No standard format for policy names or descriptions
+	•	Makes it difficult to identify policy purpose or owner
+
+7. Lack of Documentation & Versioning
+	•	No version history or documentation of policy changes
+	•	Hinders audit readiness and rollback capabilities
+
+8. No Pre-Deployment Simulation
+	•	SCP changes not tested using IAM policy simulator
+	•	Increases risk of breaking workloads or access controls
+
+9. Scattered Deployment Instead of OU-based
+	•	SCPs attached to individual accounts rather than OUs
+	•	Reduces scalability and operational efficiency
+
+10. Excessive Use of Complex Conditions
+	•	Complicated Condition blocks without validation
+	•	Leads to unintended access denials and debugging challenges
