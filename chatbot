@@ -37,3 +37,45 @@
 10. Excessive Use of Complex Conditions
 	•	Complicated Condition blocks without validation
 	•	Leads to unintended access denials and debugging challenges
+
+
+1. Consolidate Redundant Policies
+	•	Merge similar SCPs to reduce clutter and simplify management
+	•	Use modular design for better scalability and clarity
+
+2. Review and Attach All Relevant SCPs
+	•	Audit for unattached SCPs and remove or attach as needed
+	•	Ensure all active policies serve a valid control purpose
+
+3. Enforce Least Privilege with Explicit Denies
+	•	Apply Explicit Deny for high-risk services (IAM, KMS, Organizations)
+	•	Avoid wildcard actions ("Action": "*") unless strictly necessary
+
+4. Align SCPs with Organizational Units (OUs)
+	•	Attach policies to OUs instead of individual accounts
+	•	Simplifies policy enforcement and centralizes management
+
+5. Standardize Naming & Descriptions
+	•	Follow consistent naming conventions for easier identification
+	•	Include purpose and scope in descriptions or tags
+
+6. Implement Change Tracking & Documentation
+	•	Maintain version-controlled documentation for every SCP
+	•	Track policy owners, change history, and business justification
+
+7. Use Policy Simulator for Testing
+	•	Validate policy changes using IAM Policy Simulator or aws policytool
+	•	Prevent accidental access disruption before deployment
+
+8. Simplify Conditions
+	•	Refactor complex Condition blocks for clarity
+	•	Test with real-world scenarios to ensure expected behavior
+
+9. Review SCPs Quarterly
+	•	Schedule regular reviews for all SCPs with stakeholders
+	•	Align with business changes, compliance requirements, and security goals
+
+10. Integrate with Security Automation
+	•	Use AWS Config or custom Lambda functions to flag policy drift
+	•	Set up alerts for policy changes or detachment events
+
