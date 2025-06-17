@@ -1,81 +1,15 @@
-1. Redundant Policies
-	•	Multiple SCPs with overlapping rules across accounts
-	•	Increases complexity and policy maintenance effort
+Dear Ram,
+Cc: [HR’s Name] / HR Team
 
-2. Unattached SCPs
-	•	SCPs exist but are not attached to root or member accounts
-	•	These policies are ineffective and unused
+I hope you’re doing well.
 
-3. Overly Permissive Access
-	•	Some SCPs allow broad access (e.g., "Action": "*"), violating least privilege principle
-	•	Risk of privilege misuse or lateral movement
+Following my resignation submitted on 20th May 2025, and as per the terms of my employment contract, I am writing to formally request an early release through notice period buyout.
 
-4. Missing Explicit Deny for Sensitive Services
-	•	No restrictions on critical services like IAM, KMS, or Organizations
-	•	Increases risk of accidental or unauthorized changes
+As mentioned in my offer letter, I understand that either party may opt for a notice period buyout equivalent to the base salary for the unserved duration. I have already served nearly 30 days of the 90-day notice period, and I kindly request to be relieved by 20th June 2025, by compensating for the remaining period as per company policy.
 
-5. Misaligned Deployment Scope
-	•	SCPs applied at root level with rules only relevant to a few accounts
-	•	Causes unnecessary restrictions across the org
+I would appreciate your urgent support and HR’s guidance on the buyout amount and next steps. I am committed to ensuring a complete and smooth handover before my departure.
 
-6. Inconsistent Naming Conventions
-	•	No standard format for policy names or descriptions
-	•	Makes it difficult to identify policy purpose or owner
+Thank you very much for your understanding.
 
-7. Lack of Documentation & Versioning
-	•	No version history or documentation of policy changes
-	•	Hinders audit readiness and rollback capabilities
-
-8. No Pre-Deployment Simulation
-	•	SCP changes not tested using IAM policy simulator
-	•	Increases risk of breaking workloads or access controls
-
-9. Scattered Deployment Instead of OU-based
-	•	SCPs attached to individual accounts rather than OUs
-	•	Reduces scalability and operational efficiency
-
-10. Excessive Use of Complex Conditions
-	•	Complicated Condition blocks without validation
-	•	Leads to unintended access denials and debugging challenges
-
-
-1. Consolidate Redundant Policies
-	•	Merge similar SCPs to reduce clutter and simplify management
-	•	Use modular design for better scalability and clarity
-
-2. Review and Attach All Relevant SCPs
-	•	Audit for unattached SCPs and remove or attach as needed
-	•	Ensure all active policies serve a valid control purpose
-
-3. Enforce Least Privilege with Explicit Denies
-	•	Apply Explicit Deny for high-risk services (IAM, KMS, Organizations)
-	•	Avoid wildcard actions ("Action": "*") unless strictly necessary
-
-4. Align SCPs with Organizational Units (OUs)
-	•	Attach policies to OUs instead of individual accounts
-	•	Simplifies policy enforcement and centralizes management
-
-5. Standardize Naming & Descriptions
-	•	Follow consistent naming conventions for easier identification
-	•	Include purpose and scope in descriptions or tags
-
-6. Implement Change Tracking & Documentation
-	•	Maintain version-controlled documentation for every SCP
-	•	Track policy owners, change history, and business justification
-
-7. Use Policy Simulator for Testing
-	•	Validate policy changes using IAM Policy Simulator or aws policytool
-	•	Prevent accidental access disruption before deployment
-
-8. Simplify Conditions
-	•	Refactor complex Condition blocks for clarity
-	•	Test with real-world scenarios to ensure expected behavior
-
-9. Review SCPs Quarterly
-	•	Schedule regular reviews for all SCPs with stakeholders
-	•	Align with business changes, compliance requirements, and security goals
-
-10. Integrate with Security Automation
-	•	Use AWS Config or custom Lambda functions to flag policy drift
-	•	Set up alerts for policy changes or detachment events
-
+Warm regards,
+T. Gunasekhar
