@@ -1,0 +1,182 @@
+Received: from SJ0PR13MB5944.namprd13.prod.outlook.com (2603:10b6:a03:43c::17)
+ by MW5PR13MB5904.namprd13.prod.outlook.com with HTTPS; Wed, 25 Jun 2025
+ 13:19:51 +0000
+Received: from PH8PR13MB6223.namprd13.prod.outlook.com (2603:10b6:510:250::10)
+ by SJ0PR13MB5944.namprd13.prod.outlook.com (2603:10b6:a03:43c::17) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8857.29; Wed, 25 Jun
+ 2025 13:19:49 +0000
+Received: from PH8PR13MB6223.namprd13.prod.outlook.com
+ ([fe80::cb4f:2d87:e864:150f]) by PH8PR13MB6223.namprd13.prod.outlook.com
+ ([fe80::cb4f:2d87:e864:150f%4]) with mapi id 15.20.8857.026; Wed, 25 Jun 2025
+ 13:19:49 +0000
+From: DeliveryTeamSupport <DeliveryTeamSupport@experian.com>
+To: Global Desktop Asset Services <GlobalDesktopAssetServices@experian.com>,
+	Payroll India <PayrollIndia@experian.com>, GIC SiteOps Hyd
+	<GIC-SiteOps-Hyd@experian.com>, Payroll India <PayrollIndia@experian.com>,
+	"T, Gunasekhar" <Gunasekhar.T@experian.com>, "Koneti, Vivek"
+	<vivek.koneti@experian.com>
+CC: HR Operations-GIC HYD <GICHyd_HROps@experian.com>, "Peesa, Ramprasad"
+	<Ramprasad.Peesa@experian.com>
+Subject: =?Windows-1252?Q?Exit_Notification_=96_T_Gunasekhar_-_72915884?=
+Thread-Topic: =?Windows-1252?Q?Exit_Notification_=96_T_Gunasekhar_-_72915884?=
+Thread-Index: AQHb5dPTiEYqa/+OeEiVQXTx8BTYSQ==
+Date: Wed, 25 Jun 2025 13:19:48 +0000
+Message-ID:
+	<PH8PR13MB6223933E91D3D2518CDDBD44ED7BA@PH8PR13MB6223.namprd13.prod.outlook.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Exchange-Organization-AuthAs: Internal
+X-MS-Exchange-Organization-AuthMechanism: 04
+X-MS-Exchange-Organization-AuthSource: PH8PR13MB6223.namprd13.prod.outlook.com
+X-MS-Exchange-Organization-ComplianceLabelId:
+	dbcf840f-8665-4f5b-a7e0-9e2c2dc15bfb
+X-MS-Has-Attach:
+X-MS-Exchange-Organization-Network-Message-Id:
+	3bf7ca6c-9165-4ba2-2fe0-08ddb3eaf661
+X-MS-Exchange-Organization-SCL: 1
+X-MS-TNEF-Correlator:
+X-MS-Exchange-Organization-RecordReviewCfmType: 0
+x-ms-publictraffictype: Email
+authentication-results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=experian.com;
+x-ms-office365-filtering-correlation-id: 3bf7ca6c-9165-4ba2-2fe0-08ddb3eaf661
+x-microsoft-antispam: BCL:0;ARA:13230040|366016|8096899003|41050700001;
+x-ms-traffictypediagnostic:
+	PH8PR13MB6223:EE_|SJ0PR13MB5944:EE_|MW5PR13MB5904:EE_
+x-forefront-antispam-report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH8PR13MB6223.namprd13.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(8096899003)(41050700001);DIR:INT;
+x-ms-exchange-transport-crosstenantheadersstamped: SJ0PR13MB5944
+x-ms-exchange-crosstenant-originalarrivaltime: 25 Jun 2025 13:19:48.2273 (UTC)
+x-ms-exchange-crosstenant-network-message-id:
+	3bf7ca6c-9165-4ba2-2fe0-08ddb3eaf661
+x-ms-exchange-crosstenant-id: be67623c-1932-42a6-9d24-6c359fe5ea71
+x-ms-exchange-crosstenant-fromentityheader: Hosted
+x-ms-exchange-transport-endtoendlatency: 00:00:03.2356123
+x-ms-exchange-processed-by-bccfoldering: 15.20.8857.026
+x-ms-exchange-crosstenant-mailboxtype: HOSTED
+x-ms-exchange-crosstenant-userprincipalname:
+	5dZB51k8ihAQ5nVCE5dMaZ0dBt1eRikjebNfiuwXKomyTzx0xz7p5lWG7YOG+Yqmga2+JuPw7zwoku8hBx+feBHVCKDw1qnEsHYQA/ahaBs=
+x-ms-exchange-crosstenant-authas: Internal
+x-ms-exchange-crosstenant-authsource: PH8PR13MB6223.namprd13.prod.outlook.com
+X-Microsoft-Antispam-Mailbox-Delivery:
+	ucf:0;jmr:0;auth:0;dest:I;ENG:(910005)(944506478)(944626604)(920097)(425001)(930097)(140003);
+X-Microsoft-Antispam-Message-Info:
+	+mIgS4xRP+sRR9Bkg8iVSd6XVxrhgmGN6sKX63iqZN78QAM7jSb13Dgur0xEdaglKhtxPMnCwvoaSy/u1s6j8caFJFjYH7GNVgYKTozhKddiu6+azd0OE3xgHsaT2On3QNPrR+oqxMgAA4R6n1so96kRl9nzSKltCZzL++TCLNRK628uODgS7fhtFQbTN85BW7+4uR7erGp9vg4ca44L202hQb4lHA34GaNqpnHVUt+AWLewo70F+9jBG3/FGOhOQ+j5muMFHcknfLwwQrUgKXYcdbYyn96Yk05yJ/ICvgYzAYIpTGSOjmX9/MNoh8gEm/9lDr6bP6RFO0N+FmJo5Rz2Pqed/NVwBbYDXh1oqrdogkd8QGJnnLRNLFybV7zeYyMF3ELgsZAzWQUp0y4Mhn6i8FXukEORwnsUlPiPjWYGYocO+1HQQ5p7Ws33cdsueAgm3CW0nCIF8quoFYVUaKhoBoyTRH8MaDmpCZ2XNgJtUpbxKfrm0PGtBTsG2hbxlhu7nH7cBsm1RCyJ9g5m6L13bMzED7U5uyWmgw5dOYd+Bhxc4SD692JjHr2SZFsItjpwwn7XQfmZC1YOtuz9EZ6EYlX4SxtPabbUKW4cH3TGhubNiuFKs9BGiuAvPQTh2SUWjGomM9+D0TSC37VrmAIMnq78KiQnT4TIID1muz0+yNBq2311kgkM0AAtnThHfCo57gbFbyHaRVdOqrNrWf9TECiF8U0qq9BPocW3MbnYjIWWI/GhaE/msZqhgRyaeoTATadtBjQ/Iw6lS6U8jL2ECTzMz1Zh2TwEkkKOKQA=
+Content-Type: multipart/alternative;
+	boundary="_000_PH8PR13MB6223933E91D3D2518CDDBD44ED7BAPH8PR13MB6223namp_"
+MIME-Version: 1.0
+
+--_000_PH8PR13MB6223933E91D3D2518CDDBD44ED7BAPH8PR13MB6223namp_
+Content-Type: text/plain; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
+
+Hi Everyone,
+
+
+This is to inform you about the resignation of one of our employees. Below =
+are the employee's details:
+
+
+Employee Name : T Gunasekhar
+
+Employee No : 72915884
+
+Last working day : 2025-06-27
+
+Reporting Manager : Ramprasad.Peesa@experian.com
+
+HR Org : ESS-Technology:Ascend Globe
+
+
+We want to ensure a smooth exit process for this employee. You will receive=
+ automated email notifications regarding the employee's exit clearance. The=
+se emails will request your confirmation for the employee's exit clearance =
+with the respective departments.
+
+We kindly request your cooperation in performing the necessary due diligenc=
+e and providing clearance for the employee's exit as needed. If you have an=
+y questions or require further information, please feel free to reach out t=
+o our HR department.
+
+
+Hi T Gunasekhar ,
+
+
+Please raise ServiceNow AMD<https://experian.service-now.com/itservices?id=
+=3Dsc_cat_item&sys_id=3Df0b8235bdb0e26402511fa910f961900> request to return=
+ company assets and share it with your respective IT team. Kindly mention l=
+ast working day in the comments section of the ServiceNow ticket.
+
+Please do not reply to this email as this mailbox will not be monitored. Fo=
+r any exit related queries, please write it to GICExitSupport@experian.com.
+
+
+Thank You,
+
+Experian Hyderabad HR Team
+
+--_000_PH8PR13MB6223933E91D3D2518CDDBD44ED7BAPH8PR13MB6223namp_
+Content-Type: text/html; charset="Windows-1252"
+Content-Transfer-Encoding: quoted-printable
+
+<html>
+<head>
+<meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3DWindows-1=
+252">
+</head>
+<body>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Hi Everyone,</=
+span></p>
+<br>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">This is to inf=
+orm you about the resignation of one of our employees. Below are the employ=
+ee's details:</span></p>
+<br>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Employee Name =
+: </span>T Gunasekhar</p>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Employee No : =
+</span>72915884</p>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Last working d=
+ay : </span>2025-06-27</p>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Reporting Mana=
+ger : </span>Ramprasad.Peesa@experian.com</p>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">HR Org : </spa=
+n>ESS-Technology:Ascend Globe</p>
+<br>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">We want to ens=
+ure a smooth exit process for this employee. You will receive automated ema=
+il notifications regarding the employee's exit clearance. These emails will=
+ request your confirmation for the employee's
+ exit clearance with the respective departments.</span></p>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">We kindly requ=
+est your cooperation in performing the necessary due diligence and providin=
+g clearance for the employee's exit as needed. If you have any questions or=
+ require further information, please feel free
+ to reach out to our HR department.</span></p>
+<br>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Hi </span>T Gu=
+nasekhar <span style=3D"font-family: &quot;Times New Roman&quot;;">
+,</span></p>
+<br>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Please raise S=
+erviceNow </span><a href=3D"https://experian.service-now.com/itservices?id=
+=3Dsc_cat_item&amp;sys_id=3Df0b8235bdb0e26402511fa910f961900"><span style=
+=3D"font-family: &quot;Times New Roman&quot;;">AMD</span></a><span style=3D=
+"font-family: &quot;Times New Roman&quot;;">
+ request to return company assets and share it with your respective IT team=
+. Kindly mention last working day in the comments section of the ServiceNow=
+ ticket.
+</span></p>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Please do not =
+reply to this email as this mailbox will not be monitored. For any exit rel=
+ated queries, please write it to GICExitSupport@experian.com.</span></p>
+<br>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Thank You,</sp=
+an></p>
+<p><span style=3D"font-family: &quot;Times New Roman&quot;;">Experian Hyder=
+abad HR Team</span></p>
+</body>
+</html>
+
+--_000_PH8PR13MB6223933E91D3D2518CDDBD44ED7BAPH8PR13MB6223namp_--
